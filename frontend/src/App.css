@@ -1,107 +1,32 @@
 /* ==========================================================================
-   1. LAYOUT PRINCIPAL E SIDEBAR
+   1. LAYOUT PRINCIPAL (TELA CHEIA - SEM SIDEBAR)
    ========================================================================== */
-.app-layout {
-  display: flex;
-  min-height: 100vh;
+.app-layout, .main-content-full {
   width: 100vw;
+  min-height: 100vh;
   background-color: #f8fafc;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .main-content {
   flex: 1;
   background-color: #f8fafc;
   overflow-y: auto;
+  width: 100%;
 }
 
 .page-container {
   padding: 32px 40px;
-  max-width: 1200px;
+  width: 100%;
+  max-width: 100%; /* Ocupa a largura total da tela */
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
-/* Sidebar Estilo Figma */
+/* Força a remoção de qualquer elemento de Sidebar antigo */
 .sidebar {
-  width: 250px;
-  background-color: #0b132b;
-  color: #94a3b8;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 16px;
-  flex-shrink: 0;
-}
-
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 24px;
-  color: #ffffff;
-}
-
-.brand-icon {
-  font-size: 24px;
-}
-
-.sidebar-brand h2 {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
-}
-
-.sidebar-brand span {
-  font-size: 10px;
-  color: #64748b;
-  letter-spacing: 0.05em;
-  display: block;
-}
-
-.sidebar-section {
-  font-size: 11px;
-  font-weight: 700;
-  color: #475569;
-  padding: 12px 12px 8px 12px;
-  letter-spacing: 0.05em;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.2s;
-}
-
-.nav-item:hover {
-  background-color: #1c2541;
-  color: #ffffff;
-}
-
-.sidebar-nav .nav-item.active {
-  background-color: #2563eb !important;
-  color: #ffffff !important;
-  font-weight: 600;
-}
-
-.disabled-item {
-  cursor: default;
-  opacity: 0.6;
-}
-
-.disabled-item:hover {
-  background-color: transparent !important;
-  color: #94a3b8 !important;
+  display: none !important;
 }
 
 /* ==========================================================================
@@ -279,7 +204,7 @@
 }
 
 /* ==========================================================================
-   5. RELATÓRIOS (CORRIGIDO SEM BARRAS COLORIDAS)
+   5. RELATÓRIOS
    ========================================================================== */
 .reports-grid {
   display: grid;
@@ -354,8 +279,9 @@
   outline: none;
   font-size: 13px;
 }
+
 /* ==========================================================================
-   AJUSTES FINAIS DO DASHBOARD
+   6. AJUSTES DO DASHBOARD
    ========================================================================== */
 .dashboard-top-bar {
   display: flex;
@@ -415,7 +341,6 @@
   font-size: 13px;
 }
 
-/* Grid dos 4 Cards Superiores */
 .dashboard-metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -465,7 +390,6 @@
   color: #94a3b8;
 }
 
-/* Layout de Duas Colunas Principal */
 .dashboard-main-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -517,7 +441,6 @@
   color: #64748b;
 }
 
-/* Coluna Direita (Acesso Rápido + Lembrete) */
 .dashboard-sidebar-column {
   display: flex;
   flex-direction: column;
@@ -583,8 +506,9 @@
   font-weight: 600;
   cursor: pointer;
 }
+
 /* ==========================================================================
-   CORREÇÃO DETALHES DO PRONTUÁRIO
+   7. DETALHES DO PRONTUÁRIO
    ========================================================================== */
 .patient-detail-card {
   display: flex !important;
@@ -649,7 +573,6 @@
   margin: 2px 0 0 0 !important;
 }
 
-/* Abas */
 .tabs-container {
   display: flex !important;
   gap: 24px !important;
@@ -684,7 +607,6 @@
   background-color: #2563eb !important;
 }
 
-/* Grid de Métricas */
 .prontuario-cards-grid {
   display: grid !important;
   grid-template-columns: repeat(4, 1fr) !important;
@@ -708,8 +630,9 @@
   border-bottom: 1px solid #f3f4f6 !important;
   text-align: left !important;
 }
+
 /* ==========================================================================
-   AJUSTES DA TELA DE PACIENTES
+   8. TELA DE PACIENTES
    ========================================================================== */
 .table-filter-bar {
   display: flex;
