@@ -1,3 +1,15 @@
+import { NavLink } from 'react-router-dom';
+
+const linksMenu = [
+    { caminho: '/dashboard', icone: '▦', rotulo: 'Dashboard' },
+    { caminho: '/pacientes', icone: '♧', rotulo: 'Pacientes' },
+    { caminho: '/agenda', icone: '▣', rotulo: 'Agenda' },
+    { caminho: '/prontuario', icone: '▤', rotulo: 'Prontuários' },
+    { caminho: '/financeiro', icone: '$', rotulo: 'Financeiro' },
+    { caminho: '/estoque', icone: '⬡', rotulo: 'Estoque' },
+    { caminho: '/relatorios', icone: '▥', rotulo: 'Relatórios' },
+];
+
 export default function Sidebar() {
     return (
         <aside className="sidebar">
@@ -17,41 +29,18 @@ export default function Sidebar() {
             {/* Menu */}
             <nav className="sidebar-menu">
                 <p className="sidebar-titulo">MENU PRINCIPAL</p>
-
-                <a href="/Dashboard" className="sidebar-link ativo">
-                    <span>▦</span>
-                    Dashboard
-                </a>
-
-                <a href="/Pacientes" className="sidebar-link">
-                    <span>♧</span>
-                    Pacientes
-                </a>
-
-                <a href="/Agenda" className="sidebar-link">
-                    <span>▣</span>
-                    Agenda
-                </a>
-
-                <a href="/Prontuarios" className="sidebar-link">
-                    <span>▤</span>
-                    Prontuários
-                </a>
-
-                <a href="/Financeiro" className="sidebar-link">
-                    <span>$</span>
-                    Financeiro
-                </a>
-
-                <a href="/Estoque" className="sidebar-link">
-                    <span>⬡</span>
-                    Estoque
-                </a>
-
-                <a href="/Relatorios" className="sidebar-link">
-                    <span>▥</span>
-                    Relatórios
-                </a>
+                {linksMenu.map((link) => (
+                    <NavLink
+                        key={link.caminho}
+                        to={link.caminho}
+                        className={({ isActive }) =>
+                            `sidebar-link${isActive ? ' ativo' : ''}`
+                        }
+                    >
+                        <span>{link.icone}</span>
+                        {link.rotulo}
+                    </NavLink>
+                ))}
             </nav>
 
             {/* Perfil do dentista */}

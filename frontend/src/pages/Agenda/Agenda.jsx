@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import NovaConsulta from './NovaConsulta';
+import Sidebar from '../../components/SideBar';
 
 function Agenda() {
   const [dataSelecionada, setDataSelecionada] = useState('2025-08-28');
@@ -128,7 +129,9 @@ function Agenda() {
   }
 
   return (
-    <div className="agenda-page">
+    <div className="dashboard-layout">
+      <Sidebar />
+      <main className="agenda-page">
       <header className="agenda-header">
         <div>
           <h1>Agenda</h1>
@@ -317,6 +320,7 @@ function Agenda() {
           onSave={cadastrarConsulta}
         />
       )}
+      </main>
     </div>
   );
 }
