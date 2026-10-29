@@ -1,7 +1,9 @@
-import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../../App.css';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   const consultasHoje = [
     { horario: '08:00', paciente: 'Ana Costa Lima', procedimento: 'Limpeza · Dr. Lucas de Oliveira', status: 'Confirmado', tipo: 'ativo' },
     { horario: '09:00', paciente: 'Pedro Souza', procedimento: 'Avaliação · Dr. Lucas de Oliveira', status: 'Confirmado', tipo: 'ativo' },
@@ -40,7 +42,9 @@ export default function Dashboard() {
           <h1 className="page-title">Bom dia, Dr. Lucas!</h1>
           <p className="page-subtitle">Quinta-feira, 28 de agosto de 2025</p>
         </div>
-        <button className="btn-primary">📅 Ver Agenda Completa</button>
+        <button className="btn-primary" onClick={() => navigate('/agenda')}>
+          📅 Ver Agenda Completa
+        </button>
       </div>
 
       <div className="dashboard-metrics-grid">
