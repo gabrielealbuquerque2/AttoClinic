@@ -12,7 +12,6 @@ export default function Dashboard() {
 
   return (
     <div className="page-container">
-      {/* Topo / Breadcrumb + Perfil */}
       <div className="dashboard-top-bar">
         <div className="breadcrumb-info">
           <span>OdontoGestão / </span>
@@ -36,7 +35,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Título Principal */}
       <div className="page-header" style={{ marginTop: '20px' }}>
         <div>
           <h1 className="page-title">Bom dia, Dr. Lucas!</h1>
@@ -45,7 +43,6 @@ export default function Dashboard() {
         <button className="btn-primary">📅 Ver Agenda Completa</button>
       </div>
 
-      {/* Grid com os 4 Cards Superiores em Linha */}
       <div className="dashboard-metrics-grid">
         <div className="metric-card-figma">
           <div className="metric-icon-wrapper purple">👥</div>
@@ -76,9 +73,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Conteúdo em Duas Colunas */}
       <div className="dashboard-main-grid">
-        {/* Coluna Principal: Consultas de Hoje */}
         <div className="card consultations-card">
           <div className="consultations-header">
             <h3>Consultas de Hoje</h3>
@@ -101,7 +96,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Coluna Lateral: Acesso Rápido e Lembrete */}
         <div className="dashboard-sidebar-column">
           <div className="card">
             <h3 style={{ marginBottom: '16px', fontSize: '15px' }}>Acesso Rápido</h3>
@@ -140,7 +134,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Card Azul de Lembrete */}
           <div className="system-reminder-card">
             <h4>Lembrete do Sistema</h4>
             <p>3 pacientes têm consulta de retorno vencida. Verifique a agenda para reagendamento.</p>
