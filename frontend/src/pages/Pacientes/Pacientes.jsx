@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../App.css';
+import Sidebar from '../../components/SideBar';
 
 const pacientesIniciais = [
   { id: 1, nome: 'Maria Clara Oliveira Santos', email: 'mariaclara@email.com', cpf: '345.678.901-23', telefone: '(11) 98765-4321', ultimaConsulta: '15/08/2025', status: 'Ativo', inicial: 'MC', cor: '#e11d48' },
@@ -24,6 +25,9 @@ export default function Pacientes() {
   });
 
   return (
+    <div className="dashboard-layout">
+    <Sidebar />
+
     <div className="page-container">
       <div className="page-header">
         <div>
@@ -109,6 +113,7 @@ export default function Pacientes() {
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 }

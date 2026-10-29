@@ -1,8 +1,12 @@
 import React from 'react';
 import '../../App.css';
+import Sidebar from '../../components/SideBar';
 
 export default function Relatorios() {
   return (
+      <div className="dashboard-layout">
+      <Sidebar />
+
     <div className="page-container">
       <div className="breadcrumb-info">
         <span>OdontoGestão / </span>
@@ -66,5 +70,6 @@ export default function Relatorios() {
         </div>
       </div>
     </div>
+  </div>
   );
 }

@@ -1,13 +1,16 @@
-function Button({ label, type }) {
-
+export default function Button({
+  label,
+  type = 'button',
+  variant = 'primary',
+  onClick
+}) {
   return (
-
-    <button type={type}>{label}</button>
-
+    <button
+      type={type}
+      onClick={onClick}
+      className={`botao-principal botao-${variant}`}
+    >
+      {label}
+    </button>
   );
-
 }
-
-
-
-export default Button;
