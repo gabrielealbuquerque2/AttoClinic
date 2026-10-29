@@ -1,3 +1,347 @@
+
+/* =========================
+   TELA DE LOGIN
+========================= */
+
+.login-page {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #102b4c;
+  font-family: Arial, sans-serif;
+}
+
+/* =========================
+   BARRA LATERAL
+========================= */
+
+.side-bar {
+  width: 50%;
+  min-height: 100vh;
+  padding: 60px;
+  background-color: #102b4c;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.side-bar h3 {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 40px;
+  padding: 100px;
+}
+
+.side-bar h1 {
+  font-size: 42px;
+  font-weight: bold;
+  line-height: 1.3;
+}
+
+/* =========================
+   CONTEÚDO DO LOGIN
+========================= */
+
+.login-content {
+  width: 58%;
+  min-height: 100vh;
+  padding: 35px 40px;
+  box-sizing: border-box;
+  background-color: #fff;
+  border-radius: 30px 0 0 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 432px;
+}
+
+.login-header {
+  margin-bottom: 30px;
+}
+
+.login-header h2 {
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+
+.login-header p {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* =========================
+   FORMULÁRIO
+========================= */
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.campo-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+.campo-formulario label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #263445;
+}
+
+.campo-formulario input {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  background-color: white;
+}
+
+.campo-formulario input:focus {
+  outline: none;
+  border-color: #2057a5;
+  box-shadow: 0 0 0 2px rgba(32, 87, 165, 0.15);
+}
+
+/* =========================
+   BOTÃO REUTILIZÁVEL
+========================= */
+
+.botao-principal {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* Botão principal */
+
+.botao-primary {
+  background-color: #2057a5;
+  color: white;
+  border: 1px solid #2057a5;
+}
+
+.botao-primary:hover {
+  background-color: #174785;
+}
+
+/* Botão secundário */
+
+.botao-secondary {
+  background-color: #eff6ff;
+  color: #145cff;
+  border: 2px solid #b8d5ff;
+}
+
+.botao-secondary:hover {
+  background-color: #dcecff;
+}
+
+/* Botão em formato de link */
+
+.botao-link {
+  width: auto;
+  min-height: auto;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #145cff;
+  font-size: 14px;
+  font-weight: 400;
+  text-decoration: underline;
+}
+
+.botao-link:hover {
+  background: none;
+  color: #174785;
+}
+
+/* Link abaixo do campo de senha */
+
+.esqueci-senha {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* =========================
+   MENSAGEM DE ERRO
+========================= */
+
+.mensagem-erro {
+  color: #dc2626;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* =========================
+   DIVISOR
+========================= */
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-divider span {
+  flex: 1;
+  height: 1px;
+  background-color: #e2e8f0;
+}
+
+.login-divider p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* =========================
+   RODAPÉ
+========================= */
+
+.login-footer {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* =========================
+   RESPONSIVIDADE
+========================= */
+
+@media (max-width: 768px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .side-bar,
+  .login-content {
+    width: 100%;
+    min-height: auto;
+  }
+
+  .side-bar {
+    padding: 35px;
+  }
+
+  .side-bar h1 {
+    font-size: 32px;
+  }
+
+  .side-bar h2 {
+    margin-bottom: 24px;
+  }
+
+  .login-content {
+    width: 62%;
+    padding: 30px 24px;
+  }
+
+  .login-box {
+    max-width: 400px;
+  }
+}
+
+/* ===== TELA DE CADASTRO ===== */
+
+.cadastro-page {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #102b4c;
+  font-family: Arial, sans-serif;
+}
+
+/* ===== PAINEL AZUL ===== */
+
+.cadastro-sidebar {
+  width: 42%;
+  min-height: 100vh;
+  padding: 40px 34px;
+  box-sizing: border-box;
+  background: linear-gradient(145deg, #102b4c, #0c2746);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cadastro-logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cadastro-logo-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background-color: #173b68;
+  border: 1px solid #285b98;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.cadastro-logo h2 {
+  margin: 0 0 4px;
+  color: white;
+  font-size: 25px;
+}
+
+.cadastro-logo span {
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.cadastro-apresentacao h1 {
+  color: white;
+  font-size: 40px;
+  line-height: 1.25;
+  margin-bottom: 22px;
+}
+
+.cadastro-apresentacao h1 span {
+  color: #7db7ff;
+}
+
+.cadastro-apresentacao p {
+  max-width: 390px;
+  color: #91b9e8;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.cadastro-recursos {
+      display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
 /* ==========================================================================
    1. LAYOUT PRINCIPAL (TELA CHEIA - SEM SIDEBAR)
    ========================================================================== */
@@ -22,11 +366,6 @@
   max-width: 100%; /* Ocupa a largura total da tela */
   margin: 0 auto;
   box-sizing: border-box;
-}
-
-/* Força a remoção de qualquer elemento de Sidebar antigo */
-.sidebar {
-  display: none !important;
 }
 
 /* ==========================================================================
@@ -447,6 +786,552 @@
   gap: 16px;
 }
 
+.cadastro-recursos p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  color: #91c4ff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ===== ÁREA BRANCA ===== */
+
+.cadastro-content {
+  width: 58%;
+  min-height: 100vh;
+  padding: 35px 40px;
+  box-sizing: border-box;
+  background-color: #fff;
+  border-radius: 30px 0 0 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cadastro-box {
+  width: 100%;
+  max-width: 432px;
+}
+
+.cadastro-voltar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  margin-bottom: 24px;
+  border: none;
+  background: none;
+  color: #64748b;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.cadastro-header {
+  margin-bottom: 20px;
+}
+
+.cadastro-header h2 {
+  margin: 0 0 6px;
+  color: #102b4c;
+  font-size: 28px;
+}
+
+.cadastro-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 15px;
+}
+
+/* ===== FORMULÁRIO ===== */
+
+.cadastro-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cadastro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cadastro-campo label {
+  color: #263445;
+  font-size: 14px;
+  font-weight: 500;
+  font-weight: bold;
+
+}
+
+.cadastro-campo label span {
+  color: #ef4444;
+}
+
+.cadastro-campo input,
+.cadastro-campo select {
+  width: 100%;
+  height: 47px;
+  padding: 0 15px;
+  box-sizing: border-box;
+  background-color: #fff;
+  color: #102b4c;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 15px;
+}
+
+.cadastro-campo input::placeholder {
+  color: #94a3b8;
+}
+
+.cadastro-campo input:focus,
+.cadastro-campo select:focus {
+  outline: none;
+  border-color: #2057a5;
+  box-shadow: 0 0 0 3px rgba(32, 87, 165, 0.12);
+}
+
+.cadastro-form .botao-principal {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 2px;
+  border-radius: 12px;
+}
+
+.cadastro-erro {
+  margin: 0;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+/* ===== RODAPÉ ===== */
+
+.cadastro-footer {
+  margin-top: 30px;
+  color: #94a3b8;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+
+@media (max-width: 900px) {
+  .cadastro-sidebar {
+    width: 38%;
+    padding: 30px 22px;
+  }
+
+  .cadastro-content {
+    width: 62%;
+    padding: 30px 24px;
+  }
+
+  .cadastro-apresentacao h1 {
+    font-size: 30px;
+  }
+
+  .cadastro-logo h2 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 650px) {
+  .cadastro-page {
+    flex-direction: column;
+  }
+
+  .cadastro-sidebar {
+    width: 100%;
+    min-height: auto;
+    gap: 25px;
+    padding: 28px 24px;
+  }
+
+  .cadastro-apresentacao {
+    margin: 0;
+  }
+
+  .cadastro-apresentacao h1 {
+    font-size: 30px;
+  }
+
+  .cadastro-content {
+    width: 100%;
+    min-height: auto;
+    padding: 30px 24px;
+    border-radius: 25px 25px 0 0;
+  }
+
+  .cadastro-box {
+    max-width: 450px;
+  }
+}
+
+/* Cor do texto digitado nos campos */
+input,
+textarea,
+select {
+    color: #102b4c;
+}
+
+/* Cor do texto de exemplo dentro dos campos */
+input::placeholder,
+textarea::placeholder {
+    color: #999999;
+    opacity: 1;
+}
+
+/* =========================
+   BARRA LATERAL ODONTOLÓGICA
+========================= */
+
+.side-bar2 {
+    width: 50%;
+    min-height: 100vh;
+    padding: 45px 34px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 15% 85%, rgba(0, 112, 220, 0.16), transparent 45%),
+        linear-gradient(145deg, #08284c, #061b38 80%);
+    color: white;
+}
+
+.side-bar2::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.12;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='76' height='82' viewBox='0 0 48 48'%3E%3Cpath d='M12 8 C5 12 7 24 12 31 C15 36 16 42 20 40 C23 39 22 28 25 28 C29 28 28 39 32 40 C36 42 37 33 40 27 C45 16 40 7 32 7 C28 7 27 11 23 11 C19 11 17 6 12 8Z' fill='none' stroke='%232d9edb' stroke-width='1.2'/%3E%3C/svg%3E");
+    background-size: 76px 82px;
+}
+
+.sidebar2-conteudo {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+}
+
+.sidebar2-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 42px;
+    transform: translateY(-90px);
+}
+
+.sidebar2-logo svg {
+    width: 80px;
+    height: 80px;
+    color: #14b9ed;
+    flex-shrink: 0;
+}
+
+.sidebar2-logo h1 {
+    margin: 0;
+    color: white;
+    font-size: 80px;
+    font-weight: 750;
+    letter-spacing: -1px;
+}
+
+.sidebar2-logo h1 span,
+.sidebar2-frase h2 span {
+    color: #19b8eb;
+}
+
+.sidebar2-frase {
+    margin-bottom: 36px;
+}
+
+.sidebar2-linha {
+    width: 27px;
+    height: 2px;
+    margin-bottom: 17px;
+    background-color: #16c4f4;
+}
+
+.sidebar2-frase h2 {
+    margin: 0;
+    color: #f5f8ff;
+    font-size: 30px;
+    line-height: 1.35;
+    font-weight: 600;
+}
+
+.sidebar2-recursos {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 38px;
+}
+
+.sidebar2-recurso {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: #16bce9;
+}
+
+.sidebar2-recurso svg {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+    transform: translateY(180px);
+}
+
+.sidebar2-recurso span {
+    color: #f5f8ff;
+    font-size: 18px;
+    white-space: nowrap;
+    transform: translateY(180px);
+}
+
+/* =========================
+   AJUSTES DA TELA DE LOGIN
+========================= */
+
+.login-page .side-bar2 {
+    flex: 0 0 48%;
+}
+
+
+.login-page .login-content {
+    flex: 1;
+    width: 52%;
+    min-width: 0;
+    border-radius: 30px 0 0 30px;
+}
+
+/* =========================
+   RESPONSIVIDADE DA BARRA
+========================= */
+
+@media (max-width: 900px) {
+    .side-bar2 {
+        padding: 35px 24px;
+    }
+
+    .sidebar2-logo h1 {
+        font-size: 22px;
+    }
+
+    .sidebar2-frase h2 {
+        font-size: 18px;
+    }
+
+    .sidebar2-recursos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 22px;
+    }
+}
+
+@media (max-width: 768px) {
+    .login-page {
+        flex-direction: column;
+    }
+
+    .login-page .side-bar2,
+    .login-page .login-content {
+        width: 100%;
+        flex: auto;
+        min-height: auto;
+    }
+
+    .side-bar2 {
+        padding: 35px 24px;
+    }
+
+    .sidebar2-logo {
+        margin-bottom: 25px;
+    }
+
+    .sidebar2-frase {
+        margin-bottom: 20px;
+    }
+
+    .sidebar2-recursos {
+        margin-top: 25px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .sidebar2-recurso span {
+        font-size: 10px;
+        white-space: normal;
+    }
+
+    .login-content {
+        padding: 35px 24px;
+    }
+}
+
+/* ===== BARRA LATERAL ===== */
+
+.sidebar {
+    width: 290px;
+    min-width: 290px;
+    height: 100vh;
+    background: linear-gradient(180deg, #102b4c, #091d33);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    border-right: 1px solid #263e57;
+}
+
+/* ===== LOGO ===== */
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 22px;
+    border-bottom: 1px solid #29415b;
+}
+
+.sidebar-logo-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background-color: #19477f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 25px;
+}
+
+.sidebar-logo h2 {
+    margin: 0 0 5px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.sidebar-logo span {
+    color: #60a5fa;
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+/* ===== MENU ===== */
+
+.sidebar-menu {
+    flex: 1;
+    padding-top: 18px;
+}
+
+.sidebar-titulo {
+    margin: 0;
+    padding: 0 22px 12px;
+    color: #3985d9;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.sidebar-link {
+    height: 45px;
+    padding: 0 25px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #a8c8ee;
+    text-decoration: none;
+    font-size: 15px;
+    box-sizing: border-box;
+    border-right: 3px solid transparent;
+    transition: background-color 0.2s;
+}
+
+.sidebar-link span {
+    width: 18px;
+    font-size: 23px;
+    color: #4297ed;
+    text-align: center;
+}
+
+.sidebar-link:hover {
+    background-color: #17385d;
+    color: white;
+}
+
+.sidebar-link.ativo {
+    background-color: #19499b;
+    border-right-color: #60a5fa;
+    color: white;
+    font-weight: 600;
+}
+
+/* ===== PERFIL NO RODAPÉ ===== */
+
+.sidebar-perfil {
+    min-height: 76px;
+    padding: 14px 18px;
+    border-top: 1px solid #29415b;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.sidebar-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: #19477f;
+    color: #d8eaff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.sidebar-perfil h3 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.sidebar-perfil p {
+    margin: 0;
+    color: #80b7f5;
+    font-size: 12px;
+}
+
+/* ===== TELAS MENORES ===== */
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        min-height: auto;
+    }
+
+    .sidebar-menu {
+        padding-bottom: 12px;
+    }
+
+    .sidebar-perfil {
+        min-height: 70px;
+    }
+}
 .quick-access-list {
   display: flex;
   flex-direction: column;
@@ -716,7 +1601,6 @@
   color: #64748b;
   font-size: 13px;
 }
-
 /* ESTILOS DA AGENDA */
 
 /* ================================
@@ -3150,4 +4034,25 @@
     align-items: stretch;
     flex-direction: column;
   }
+}
+.sidebar {
+  width: 250px;
+  min-width: 250px;
+  min-height: 100vh;
+  background-color: #102b4c;
+  color: white;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.dashboard-layout .page-container {
+  flex: 1;
+  min-width: 0;
 }

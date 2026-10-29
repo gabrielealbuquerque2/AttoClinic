@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import '../../App.css';
+import Sidebar from '../../components/SideBar';
 
 export default function Prontuario() {
   // Estado para controlar se exibe a lista ou o detalhe de um paciente
@@ -21,6 +22,7 @@ export default function Prontuario() {
   // Se o utilizador clicou em "Ver Prontuário", exibe a tela detalhada do Figma
   if (pacienteSelecionado) {
     return (
+      
       <div className="page-container">
         {/* Cabeçalho superior / Breadcrumb */}
         <div className="page-header-top">
@@ -184,6 +186,9 @@ export default function Prontuario() {
 
   // Visão Inicial da Lista de Prontuários
   return (
+    <div className="dashboard-layout">
+    <Sidebar />
+
     <div className="page-container">
       <div className="breadcrumb-info">
         <span>OdontoGestão / </span>
@@ -238,6 +243,7 @@ export default function Prontuario() {
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 }

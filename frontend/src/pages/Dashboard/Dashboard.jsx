@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import '../../App.css';
+import Sidebar from '../../components/SideBar';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -13,6 +14,9 @@ export default function Dashboard() {
   ];
 
   return (
+    <div className="dashboard-layout">
+    <Sidebar />
+
     <div className="page-container">
       <div className="dashboard-top-bar">
         <div className="breadcrumb-info">
@@ -145,6 +149,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
