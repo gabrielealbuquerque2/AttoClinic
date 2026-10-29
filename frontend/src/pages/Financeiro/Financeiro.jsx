@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import NovaMovimentacao from './NovaMovimentacao';
+import Sidebar from '../../components/SideBar';
 
 const pacientes = [
   'Maria Clara Oliveira Santos',
@@ -257,7 +258,9 @@ export default function Financeiro() {
   ];
 
   return (
-    <main className="financeiro-page">
+    <div className="dashboard-layout">
+      <Sidebar />
+      <main className="financeiro-page">
       <header className="financeiro-header">
         <div>
           <h1>Financeiro</h1>
@@ -410,6 +413,7 @@ export default function Financeiro() {
           onSave={salvarLancamento}
         />
       )}
-    </main>
+      </main>
+    </div>
   );
 }

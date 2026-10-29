@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Movimentacao from './Movimentacao';
 import NovoMaterial from './NovoMaterial';
+import Sidebar from '../../components/SideBar';
 
 const DIAS_ALERTA_VALIDADE = 30;
 
@@ -229,7 +230,9 @@ export default function Estoque() {
   }
 
   return (
-    <main className="estoque-page">
+    <div className="dashboard-layout">
+      <Sidebar />
+      <main className="estoque-page">
       <header className="estoque-header">
         <div>
           <h1>Estoque</h1>
@@ -397,6 +400,7 @@ export default function Estoque() {
           onRegister={registrarMovimentacao}
         />
       )}
-    </main>
+      </main>
+    </div>
   );
 }
