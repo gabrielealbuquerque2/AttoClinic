@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Form, Button, Alert } from 'react-bootstrap';
 import {
   createUserWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
 import { auth } from '../../firebase';
-import Button from '../../components/Button';
-import SideBar2 from '../../components/SideBar2';
+import AuthLayout from '../../components/AuthLayout';
+import Campo from '../../components/Campo';
 
 export default function Cadastro() {
   const [nome, setNome] = useState('');
@@ -52,124 +53,95 @@ export default function Cadastro() {
   };
 
   return (
-    <main className="cadastro-page">
-      <SideBar2 />
+    <AuthLayout>
+      <Button
+        variant="link"
+        className="p-0 mb-4 text-secondary text-decoration-none"
+        onClick={() => navigate('/login')}
+      >
+        ‹ Voltar ao login
+      </Button>
 
-      <section className="cadastro-content">
-        <div className="cadastro-box">
+      <header className="mb-4">
+        <h2 className="fs-3 fw-bold mb-1">Criar conta</h2>
+        <p className="text-secondary mb-0">Cadastre-se para acessar o Sistema AttoClinic</p>
+      </header>
 
-          <button
-            type="button"
-            className="cadastro-voltar"
-            onClick={() => navigate('/login')}
-          >
-            ‹ <span>Voltar ao login</span>
-          </button>
+      <Form onSubmit={handleCadastro} className="d-grid gap-3">
+        <Campo
+          id="cadastro-nome"
+          label="Nome completo"
+          obrigatorio
+          placeholder="Dr. Lucas de Oliveira"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          className=""
+          required
+        />
 
-          <header className="cadastro-header">
-            <h2>Criar conta</h2>
-            <p>Cadastre-se para acessar o Sistema AttoClinic</p>
-          </header>
+        <Campo
+          id="cadastro-email"
+          label="E-mail"
+          obrigatorio
+          type="email"
+          placeholder="seu@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className=""
+          required
+        />
 
-          <form
-            className="cadastro-form"
-            onSubmit={handleCadastro}
-          >
-            <div className="cadastro-campo">
-              <label htmlFor="cadastro-nome">
-                Nome completo <span>*</span>
-              </label>
+        <Campo
+          id="cadastro-funcao"
+          label="Função na clínica"
+          obrigatorio
+          tipo="select"
+          value={funcao}
+          onChange={(e) => setFuncao(e.target.value)}
+          className=""
+          required
+        >
+          <option value="">Selecione sua função</option>
+          <option value="Dentista">Gestor</option>
+          <option value="Administrador">Funcionario(a)</option>
+        </Campo>
 
-              <input
-                id="cadastro-nome"
-                type="text"
-                placeholder="Dr. Lucas de Oliveira"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                required
-              />
-            </div>
+        <Campo
+          id="cadastro-senha"
+          label="Senha"
+          obrigatorio
+          type="password"
+          placeholder="Mínimo 6 caracteres"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          minLength={6}
+          className=""
+          required
+        />
 
-            <div className="cadastro-campo">
-              <label htmlFor="cadastro-email">
-                E-mail <span>*</span>
-              </label>
+        <Campo
+          id="cadastro-confirmar"
+          label="Confirmar senha"
+          obrigatorio
+          type="password"
+          placeholder="Repita a senha"
+          value={confirmarSenha}
+          onChange={(e) => setConfirmarSenha(e.target.value)}
+          minLength={6}
+          className=""
+          required
+        />
 
-              <input
-                id="cadastro-email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+        {error && (
+          <Alert variant="danger" className="py-2 mb-0">
+            {error}
+          </Alert>
+        )}
 
-            <div className="cadastro-campo">
-              <label htmlFor="cadastro-funcao">
-                Função na clínica <span>*</span>
-              </label>
-
-              <select
-                id="cadastro-funcao"
-                value={funcao}
-                onChange={(e) => setFuncao(e.target.value)}
-                required
-              >
-                <option value="">Selecione sua função</option>
-                <option value="Dentista">Gestor</option>
-                <option value="Administrador">Funcionario(a)</option>
-              </select>
-            </div>
-
-            <div className="cadastro-campo">
-              <label htmlFor="cadastro-senha">
-                Senha <span>*</span>
-              </label>
-
-              <input
-                id="cadastro-senha"
-                type="password"
-                placeholder="Mínimo 6 caracteres"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                minLength={6}
-                required
-              />
-            </div>
-
-            <div className="cadastro-campo">
-              <label htmlFor="cadastro-confirmar">
-                Confirmar senha <span>*</span>
-              </label>
-
-              <input
-                id="cadastro-confirmar"
-                type="password"
-                placeholder="Repita a senha"
-                value={confirmarSenha}
-                onChange={(e) => setConfirmarSenha(e.target.value)}
-                minLength={6}
-                required
-              />
-            </div>
-
-            {error && (
-              <p className="cadastro-erro">{error}</p>
-            )}
-
-            <Button
-              label="Criar conta"
-              type="submit"
-            />
-          </form>
-
-          <footer className="cadastro-footer">
-            © 2026 AttoClinic · Clínica Odontológica
-          </footer>
-
-        </div>
-      </section>
-    </main>
+        <Button type="submit" className="py-2 fw-semibold">
+          Criar conta
+        </Button>
+      </Form>
+    </AuthLayout>
   );
 }

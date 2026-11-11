@@ -1,4 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import {
+  Alert, Button, Col, Form, Modal, Row, Table, ToggleButton, ToggleButtonGroup,
+} from 'react-bootstrap';
+import Campo from '../../components/Campo';
+import StatusBadge from '../../components/StatusBadge';
 
 function dataHoje() {
   const hoje = new Date();
@@ -29,15 +34,6 @@ export default function Movimentacao({
     observacao: '',
   });
   const [erro, setErro] = useState('');
-
-  useEffect(() => {
-    function fecharComEscape(evento) {
-      if (evento.key === 'Escape') onClose();
-    }
-
-    window.addEventListener('keydown', fecharComEscape);
-    return () => window.removeEventListener('keydown', fecharComEscape);
-  }, [onClose]);
 
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
@@ -84,193 +80,149 @@ export default function Movimentacao({
     });
   }
 
-  function fecharAoClicarNoFundo(evento) {
-    if (evento.target === evento.currentTarget) onClose();
-  }
-
   return (
-    <div className="movimentacao-overlay" onMouseDown={fecharAoClicarNoFundo}>
-      <section
-        className="movimentacao-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="movimentacao-titulo"
-      >
-        <header className="movimentacao-header">
-          <div>
-            <h2 id="movimentacao-titulo">Movimentação de Estoque</h2>
-            <p>Registrar entrada ou saída de material</p>
-          </div>
-          <button
-            className="movimentacao-close"
-            type="button"
-            aria-label="Fechar movimentação"
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </header>
-
-        <div className="movimentacao-content">
-          <form className="movimentacao-form" onSubmit={registrar} noValidate>
-            <label className="movimentacao-field" htmlFor="movimentacao-material">
-              <span>Material <i>*</i></span>
-              <select
-                id="movimentacao-material"
-                name="materialId"
-                value={formulario.materialId}
-                onChange={atualizarCampo}
-                aria-invalid={Boolean(erro && !formulario.materialId)}
-              >
-                <option value="">Selecionar material...</option>
-                {materiais.map((material) => (
-                  <option key={material.id} value={material.id}>
-                    {material.nome} ({material.quantidade} {material.unidade})
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <fieldset className="movimentacao-tipo">
-              <legend>Tipo de Movimentação <i>*</i></legend>
-              <div className="movimentacao-tipo-opcoes">
-                <button
-                  className={`movimentacao-tipo-botao movimentacao-tipo-entrada ${
-                    formulario.tipo === 'entrada' ? 'selecionado' : ''
-                  }`}
-                  type="button"
-                  aria-pressed={formulario.tipo === 'entrada'}
-                  onClick={() => {
-                    setFormulario((atual) => ({ ...atual, tipo: 'entrada' }));
-                    setErro('');
-                  }}
-                >
-                  ↑ Entrada
-                </button>
-                <button
-                  className={`movimentacao-tipo-botao movimentacao-tipo-saida ${
-                    formulario.tipo === 'saida' ? 'selecionado' : ''
-                  }`}
-                  type="button"
-                  aria-pressed={formulario.tipo === 'saida'}
-                  onClick={() => {
-                    setFormulario((atual) => ({ ...atual, tipo: 'saida' }));
-                    setErro('');
-                  }}
-                >
-                  ↓ Saída
-                </button>
-              </div>
-            </fieldset>
-
-            <div className="movimentacao-row">
-              <label className="movimentacao-field" htmlFor="movimentacao-quantidade">
-                <span>Quantidade <i>*</i></span>
-                <input
-                  id="movimentacao-quantidade"
-                  name="quantidade"
-                  type="number"
-                  min="0.01"
-                  step="any"
-                  value={formulario.quantidade}
-                  onChange={atualizarCampo}
-                  aria-invalid={Boolean(erro && formulario.quantidade)}
-                />
-              </label>
-              <label className="movimentacao-field" htmlFor="movimentacao-data">
-                <span>Data</span>
-                <input
-                  id="movimentacao-data"
-                  name="data"
-                  type="date"
-                  value={formulario.data}
-                  onChange={atualizarCampo}
-                />
-              </label>
-            </div>
-
-            <label className="movimentacao-field" htmlFor="movimentacao-motivo">
-              <span>Motivo <i>*</i></span>
-              <input
-                id="movimentacao-motivo"
-                name="motivo"
-                placeholder="Ex: Uso clínico, Compra de reposição..."
-                value={formulario.motivo}
-                onChange={atualizarCampo}
-                aria-invalid={Boolean(erro && !formulario.motivo.trim())}
-              />
-            </label>
-
-            <label className="movimentacao-field" htmlFor="movimentacao-observacao">
-              <span>Observação</span>
-              <textarea
-                id="movimentacao-observacao"
-                name="observacao"
-                placeholder="Observações adicionais..."
-                rows="3"
-                value={formulario.observacao}
-                onChange={atualizarCampo}
-              />
-            </label>
-
-            {erro && <p className="movimentacao-error" role="alert">{erro}</p>}
-
-            <footer className="movimentacao-footer">
-              <button
-                className="estoque-botao estoque-botao-secundario"
-                type="button"
-                onClick={onClose}
-              >
-                Cancelar
-              </button>
-              <button className="estoque-botao estoque-botao-principal" type="submit">
-                Registrar Movimentação
-              </button>
-            </footer>
-          </form>
-
-          <section className="movimentacao-historico" aria-labelledby="movimentacao-historico-titulo">
-            <h3 id="movimentacao-historico-titulo">Histórico de Movimentações</h3>
-            <div className="movimentacao-historico-rolagem">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Material</th>
-                    <th>Tipo</th>
-                    <th>QTD</th>
-                    <th>Motivo</th>
-                    <th>Usuário</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historico.map((item) => (
-                    <tr key={item.id}>
-                      <td>{formatarData(item.data)}</td>
-                      <td>{item.material}</td>
-                      <td>
-                        <span className={`movimentacao-badge movimentacao-badge-${item.tipo}`}>
-                          {item.tipo === 'entrada' ? 'Entrada' : 'Saída'}
-                        </span>
-                      </td>
-                      <td>{item.quantidade}</td>
-                      <td>{item.motivo}</td>
-                      <td>{item.usuario}</td>
-                    </tr>
-                  ))}
-                  {historico.length === 0 && (
-                    <tr>
-                      <td className="movimentacao-historico-vazio" colSpan="6">
-                        Nenhuma movimentação registrada nesta sessão.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
+    <Modal show onHide={onClose} size="lg" centered scrollable>
+      <Modal.Header closeButton>
+        <div>
+          <Modal.Title as="h2" className="fs-5 fw-bold">Movimentação de Estoque</Modal.Title>
+          <small className="text-secondary">Registrar entrada ou saída de material</small>
         </div>
-      </section>
-    </div>
+      </Modal.Header>
+
+      <Modal.Body>
+        <Form id="form-movimentacao" onSubmit={registrar} noValidate>
+          <Campo
+            id="movimentacao-material"
+            name="materialId"
+            label="Material"
+            obrigatorio
+            tipo="select"
+            value={formulario.materialId}
+            onChange={atualizarCampo}
+          >
+            <option value="">Selecionar material...</option>
+            {materiais.map((material) => (
+              <option key={material.id} value={material.id}>
+                {material.nome} ({material.quantidade} {material.unidade})
+              </option>
+            ))}
+          </Campo>
+
+          <Form.Group className="mb-3">
+            <Form.Label className="small fw-semibold mb-1">
+              Tipo de Movimentação <span className="text-danger">*</span>
+            </Form.Label>
+            <ToggleButtonGroup
+              type="radio"
+              name="tipo-movimentacao"
+              value={formulario.tipo}
+              onChange={(tipo) => {
+                setFormulario((atual) => ({ ...atual, tipo }));
+                setErro('');
+              }}
+              className="w-100"
+            >
+              <ToggleButton id="tipo-entrada" value="entrada" variant="outline-success">
+                ↑ Entrada
+              </ToggleButton>
+              <ToggleButton id="tipo-saida" value="saida" variant="outline-danger">
+                ↓ Saída
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Form.Group>
+
+          <Row>
+            <Col sm={6}>
+              <Campo
+                id="movimentacao-quantidade"
+                name="quantidade"
+                label="Quantidade"
+                obrigatorio
+                type="number"
+                min="0.01"
+                step="any"
+                value={formulario.quantidade}
+                onChange={atualizarCampo}
+              />
+            </Col>
+            <Col sm={6}>
+              <Campo
+                id="movimentacao-data"
+                name="data"
+                label="Data"
+                type="date"
+                value={formulario.data}
+                onChange={atualizarCampo}
+              />
+            </Col>
+          </Row>
+
+          <Campo
+            id="movimentacao-motivo"
+            name="motivo"
+            label="Motivo"
+            obrigatorio
+            placeholder="Ex: Uso clínico, Compra de reposição..."
+            value={formulario.motivo}
+            onChange={atualizarCampo}
+          />
+
+          <Campo
+            id="movimentacao-observacao"
+            name="observacao"
+            label="Observação"
+            tipo="textarea"
+            rows={3}
+            placeholder="Observações adicionais..."
+            value={formulario.observacao}
+            onChange={atualizarCampo}
+          />
+
+          {erro && <Alert variant="danger" className="py-2 mb-0">{erro}</Alert>}
+        </Form>
+
+        <hr />
+
+        <h3 className="fs-6 fw-bold">Histórico de Movimentações</h3>
+        <Table size="sm" responsive className="align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Material</th>
+              <th>Tipo</th>
+              <th>QTD</th>
+              <th>Motivo</th>
+              <th>Usuário</th>
+            </tr>
+          </thead>
+          <tbody>
+            {historico.map((item) => (
+              <tr key={item.id}>
+                <td>{formatarData(item.data)}</td>
+                <td>{item.material}</td>
+                <td>
+                  <StatusBadge status={item.tipo === 'entrada' ? 'Entrada' : 'Saída'} />
+                </td>
+                <td>{item.quantidade}</td>
+                <td>{item.motivo}</td>
+                <td>{item.usuario}</td>
+              </tr>
+            ))}
+            {historico.length === 0 && (
+              <tr>
+                <td colSpan="6" className="text-center text-secondary py-3">
+                  Nenhuma movimentação registrada nesta sessão.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+      </Modal.Body>
+
+      <Modal.Footer>
+        <Button variant="outline-secondary" onClick={onClose}>Cancelar</Button>
+        <Button type="submit" form="form-movimentacao">Registrar Movimentação</Button>
+      </Modal.Footer>
+    </Modal>
   );
 }

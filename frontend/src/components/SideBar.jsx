@@ -1,58 +1,41 @@
 import { NavLink } from 'react-router-dom';
+import { Nav } from 'react-bootstrap';
 
 const linksMenu = [
-    { caminho: '/dashboard', icone: '▦', rotulo: 'Dashboard' },
-    { caminho: '/pacientes', icone: '♧', rotulo: 'Pacientes' },
-    { caminho: '/agenda', icone: '▣', rotulo: 'Agenda' },
-    { caminho: '/prontuario', icone: '▤', rotulo: 'Prontuários' },
-    { caminho: '/financeiro', icone: '$', rotulo: 'Financeiro' },
-    { caminho: '/estoque', icone: '⬡', rotulo: 'Estoque' },
-    { caminho: '/relatorios', icone: '▥', rotulo: 'Relatórios' },
+  { caminho: '/dashboard', icone: '▦', rotulo: 'Dashboard' },
+  { caminho: '/pacientes', icone: '♧', rotulo: 'Pacientes' },
+  { caminho: '/agenda', icone: '▣', rotulo: 'Agenda' },
+  { caminho: '/prontuario', icone: '▤', rotulo: 'Prontuários' },
+  { caminho: '/financeiro', icone: '$', rotulo: 'Financeiro' },
+  { caminho: '/estoque', icone: '⬡', rotulo: 'Estoque' },
+  { caminho: '/relatorios', icone: '▥', rotulo: 'Relatórios' },
 ];
 
 export default function Sidebar() {
-    return (
-        <aside className="sidebar">
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-logo d-flex align-items-center gap-3">
+        <div className="sidebar-logo-icone">🦷</div>
+        <h2 className="h5 fw-bold mb-0">AttoClinic</h2>
+      </div>
 
-            {/* Logo */}
-            <div className="sidebar-logo">
-                <div className="sidebar-logo-icon">
-                    <span>🦷</span>
-                </div>
+      <Nav as="nav" className="sidebar-menu">
+        <p className="sidebar-titulo">MENU PRINCIPAL</p>
+        {linksMenu.map((link) => (
+          <Nav.Link key={link.caminho} as={NavLink} to={link.caminho}>
+            <span className="sidebar-icone">{link.icone}</span>
+            {link.rotulo}
+          </Nav.Link>
+        ))}
+      </Nav>
 
-                <div>
-                    <h2>OdontoGestão</h2>
-                    <span>SISTEMA WEB</span>
-                </div>
-            </div>
-
-            {/* Menu */}
-            <nav className="sidebar-menu">
-                <p className="sidebar-titulo">MENU PRINCIPAL</p>
-                {linksMenu.map((link) => (
-                    <NavLink
-                        key={link.caminho}
-                        to={link.caminho}
-                        className={({ isActive }) =>
-                            `sidebar-link${isActive ? ' ativo' : ''}`
-                        }
-                    >
-                        <span>{link.icone}</span>
-                        {link.rotulo}
-                    </NavLink>
-                ))}
-            </nav>
-
-            {/* Perfil do dentista */}
-            <div className="sidebar-perfil">
-                <div className="sidebar-avatar">CM</div>
-
-                <div>
-                    <h3>Dr. Lucas de Oliveira</h3>
-                    <p>Dentista</p>
-                </div>
-            </div>
-
-        </aside>
-    );
+      <div className="sidebar-perfil d-flex align-items-center gap-3">
+        <div className="sidebar-avatar">CM</div>
+        <div>
+          <h3 className="fs-6 fw-semibold mb-0">Dr. Lucas de Oliveira</h3>
+          <small>Dentista</small>
+        </div>
+      </div>
+    </aside>
+  );
 }

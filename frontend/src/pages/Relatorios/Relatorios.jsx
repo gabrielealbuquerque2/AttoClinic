@@ -1,75 +1,67 @@
-import React from 'react';
-import '../../App.css';
-import Sidebar from '../../components/SideBar';
+import { Button, Card, Col, Form, Row } from 'react-bootstrap';
+import AppLayout from '../../components/AppLayout';
+import PageHeader from '../../components/PageHeader';
+
+const relatorios = [
+  { icone: '👥', fundo: '#e0e7ff', cor: '#3730a3', titulo: 'Relatório de Pacientes', descricao: 'Total de pacientes, novos cadastros e pacientes ativos' },
+  { icone: '📅', fundo: '#d1fae5', cor: '#065f46', titulo: 'Relatório de Consultas', descricao: 'Consultas realizadas, agendadas e canceladas por período' },
+  { icone: '💰', fundo: '#fef3c7', cor: '#92400e', titulo: 'Relatório Financeiro', descricao: 'Receitas, despesas, saldos e pagamentos pendentes' },
+  { icone: '📦', fundo: '#ffedd5', cor: '#9a3412', titulo: 'Relatório de Estoque', descricao: 'Materiais disponíveis, baixas, esgotados e prazos de validade' },
+];
 
 export default function Relatorios() {
   return (
-      <div className="dashboard-layout">
-      <Sidebar />
-
-    <div className="page-container">
-      <div className="breadcrumb-info">
-        <span>OdontoGestão / </span>
-        <strong>Relatórios</strong>
+    <AppLayout>
+      <div className="small text-secondary mb-3">
+        OdontoGestão / <strong className="text-body">Relatórios</strong>
       </div>
 
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Relatórios Consolidados</h1>
-          <p className="page-subtitle">Visualize e exporte informações consolidadas do consultório</p>
-        </div>
-      </div>
+      <PageHeader
+        titulo="Relatórios Consolidados"
+        subtitulo="Visualize e exporte informações consolidadas do consultório"
+      />
 
-      {/* Filtro de Datas */}
-      <div className="filters-card">
-        <strong style={{ fontSize: '12px', color: '#64748b', letterSpacing: '0.05em' }}>FILTROS DE DATA</strong>
-        <div className="filters-grid">
-          <label>Data Inicial:</label>
-          <input type="date" />
-          <label>Data Final:</label>
-          <input type="date" />
-        </div>
-      </div>
+      <Card className="mb-4">
+        <Card.Body>
+          <div className="small fw-bold text-secondary text-uppercase mb-3">Filtros de data</div>
+          <Row className="g-3">
+            <Col sm={6}>
+              <Form.Group controlId="data-inicial">
+                <Form.Label className="small fw-semibold">Data Inicial:</Form.Label>
+                <Form.Control type="date" />
+              </Form.Group>
+            </Col>
+            <Col sm={6}>
+              <Form.Group controlId="data-final">
+                <Form.Label className="small fw-semibold">Data Final:</Form.Label>
+                <Form.Control type="date" />
+              </Form.Group>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
 
-      {/* Grid de Relatórios */}
-      <div className="reports-grid">
-        <div className="report-card">
-          <div>
-            <div className="report-icon-box" style={{ background: '#e0e7ff', color: '#3730a3' }}>👥</div>
-            <h3>Relatório de Pacientes</h3>
-            <p>Total de pacientes, novos cadastros e pacientes ativos</p>
-          </div>
-          <button className="btn-primary">Gerar Relatório</button>
-        </div>
-
-        <div className="report-card">
-          <div>
-            <div className="report-icon-box" style={{ background: '#d1fae5', color: '#065f46' }}>📅</div>
-            <h3>Relatório de Consultas</h3>
-            <p>Consultas realizadas, agendadas e canceladas por período</p>
-          </div>
-          <button className="btn-primary">Gerar Relatório</button>
-        </div>
-
-        <div className="report-card">
-          <div>
-            <div className="report-icon-box" style={{ background: '#fef3c7', color: '#92400e' }}>💰</div>
-            <h3>Relatório Financeiro</h3>
-            <p>Receitas, despesas, saldos e pagamentos pendentes</p>
-          </div>
-          <button className="btn-primary">Gerar Relatório</button>
-        </div>
-
-        <div className="report-card">
-          <div>
-            <div className="report-icon-box" style={{ background: '#ffedd5', color: '#9a3412' }}>📦</div>
-            <h3>Relatório de Estoque</h3>
-            <p>Materiais disponíveis, baixas, esgotados e prazos de validade</p>
-          </div>
-          <button className="btn-primary">Gerar Relatório</button>
-        </div>
-      </div>
-    </div>
-  </div>
+      <Row xs={1} md={2} xl={4} className="g-3">
+        {relatorios.map((relatorio) => (
+          <Col key={relatorio.titulo}>
+            <Card className="h-100 text-center">
+              <Card.Body className="d-flex flex-column align-items-center justify-content-between">
+                <div>
+                  <div
+                    className="indicador-icone mx-auto mb-3"
+                    style={{ background: relatorio.fundo, color: relatorio.cor }}
+                  >
+                    {relatorio.icone}
+                  </div>
+                  <Card.Title as="h3" className="fs-6 fw-bold">{relatorio.titulo}</Card.Title>
+                  <Card.Text className="small text-secondary">{relatorio.descricao}</Card.Text>
+                </div>
+                <Button>Gerar Relatório</Button>
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </AppLayout>
   );
 }

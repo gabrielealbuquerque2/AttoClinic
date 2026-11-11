@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Form, Button, Alert } from 'react-bootstrap';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../firebase';
-import SideBar2 from '../../components/SideBar2';
-import Button from '../../components/Button';
+import AuthLayout from '../../components/AuthLayout';
+import Campo from '../../components/Campo';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -38,65 +39,65 @@ export default function Login() {
   };
 
   return (
-    <main className="login-page">
-      <SideBar2 />
-      <section className="login-content">
-        <div className="login-box">
-          <header className="login-header">
-            <h2>Bem-vindo de volta</h2>
-            <p>Acesse o sistema AttoClinic</p>
-          </header>
-          <form onSubmit={handleLogin} className="login-form">
-            <div className="campo-formulario">
-              <label htmlFor="email">E-mail</label>
-              <input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="campo-formulario">
-              <label htmlFor="senha">Senha</label>
-              <input
-                id="senha"
-                type="password"
-                placeholder="Digite sua senha"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                required
-              />
-            </div>
-            <div className="esqueci-senha">
-              <Button
-                label="Esqueci minha senha"
-                variant="link"
-                type="button"
-                onClick={handleEsqueciSenha}
-              />
-            </div>
-            {error && (
-              <p className="mensagem-erro">{error}</p>
-            )}
-            <Button label="Entrar" type="submit" />
-            <div className="login-divider">
-              <span></span>
-              <p>ou</p>
-              <span></span>
-            </div>
-            <Button
-              label="Criar sua conta"
-              variant="secondary"
-              onClick={() => navigate('/cadastro')}
-            />
-          </form>
-          <footer className="login-footer">
-            © 2026 AttoClinic · Clínica Odontológica
-          </footer>
+    <AuthLayout>
+      <header className="mb-4">
+        <h2 className="fs-3 fw-bold mb-1">Bem-vindo de volta</h2>
+        <p className="text-secondary mb-0">Acesse o sistema AttoClinic</p>
+      </header>
+
+      <Form onSubmit={handleLogin} className="d-grid gap-3">
+        <Campo
+          id="email"
+          label="E-mail"
+          type="email"
+          placeholder="seu@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className=""
+          required
+        />
+
+        <Campo
+          id="senha"
+          label="Senha"
+          type="password"
+          placeholder="Digite sua senha"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          className=""
+          required
+        />
+
+        <div className="text-end">
+          <Button variant="link" size="sm" className="p-0" onClick={handleEsqueciSenha}>
+            Esqueci minha senha
+          </Button>
         </div>
-      </section>
-    </main>
+
+        {error && (
+          <Alert variant="danger" className="py-2 mb-0">
+            {error}
+          </Alert>
+        )}
+
+        <Button type="submit" className="py-2 fw-semibold">
+          Entrar
+        </Button>
+
+        <div className="d-flex align-items-center gap-3 text-secondary small">
+          <hr className="flex-grow-1 m-0" />
+          ou
+          <hr className="flex-grow-1 m-0" />
+        </div>
+
+        <Button
+          variant="outline-primary"
+          className="py-2 fw-semibold"
+          onClick={() => navigate('/cadastro')}
+        >
+          Criar sua conta
+        </Button>
+      </Form>
+    </AuthLayout>
   );
 }
