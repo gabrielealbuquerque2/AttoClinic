@@ -1,6 +1,10 @@
 import { useState } from 'react';
+import { Alert, Button, Card, Col, Form, Row, Table } from 'react-bootstrap';
 import NovaMovimentacao from './NovaMovimentacao';
-import Sidebar from '../../components/SideBar';
+import AppLayout from '../../components/AppLayout';
+import PageHeader from '../../components/PageHeader';
+import IndicatorCard from '../../components/IndicatorCard';
+import StatusBadge from '../../components/StatusBadge';
 
 const pacientes = [
   'Maria Clara Oliveira Santos',
@@ -143,14 +147,6 @@ function formatarVariacao(atual, anterior) {
   })}% em relação ao anterior`;
 }
 
-function classeTipo(tipo) {
-  return `financeiro-tipo financeiro-tipo-${tipo}`;
-}
-
-function classeStatus(status) {
-  return `financeiro-status financeiro-status-${status.toLowerCase()}`;
-}
-
 export default function Financeiro() {
   const [lancamentos, setLancamentos] = useState(lancamentosIniciais);
   const [mesSelecionado, setMesSelecionado] = useState('2025-08');
@@ -230,21 +226,21 @@ export default function Financeiro() {
       valor: moeda.format(receitas),
       variacao: formatarVariacao(receitas, receitasAnterior),
       icone: '↗',
-      cor: 'receita',
+      tom: 'success',
     },
     {
       titulo: 'Despesas do Mês',
       valor: moeda.format(despesas),
       variacao: formatarVariacao(despesas, despesasAnterior),
       icone: '↘',
-      cor: 'despesa',
+      tom: 'danger',
     },
     {
       titulo: 'Saldo',
       valor: moeda.format(receitas - despesas),
       variacao: 'Receitas menos despesas pagas',
       icone: '=',
-      cor: 'saldo',
+      tom: 'primary',
     },
     {
       titulo: 'Pagamentos Pendentes',
@@ -253,153 +249,167 @@ export default function Financeiro() {
       ),
       variacao: `${pendentes.length} lançamento${pendentes.length === 1 ? '' : 's'} pendente${pendentes.length === 1 ? '' : 's'}`,
       icone: '◷',
-      cor: 'pendente',
+      tom: 'warning',
     },
   ];
 
   return (
-    <div className="dashboard-layout">
-      <Sidebar />
-      <main className="financeiro-page">
-      <header className="financeiro-header">
-        <div>
-          <h1>Financeiro</h1>
-          <div className="financeiro-mes">
-            <p>{formatarMes(mesSelecionado)}</p>
-            <input
+    <AppLayout>
+      <PageHeader
+        titulo="Financeiro"
+        subtitulo={
+          <div className="d-flex flex-wrap align-items-center gap-2">
+            <span>{formatarMes(mesSelecionado)}</span>
+            <Form.Control
               aria-label="Selecionar mês do financeiro"
               type="month"
+              size="sm"
+              className="w-auto"
               value={mesSelecionado}
               onChange={(evento) => setMesSelecionado(evento.target.value)}
             />
           </div>
-        </div>
-        <div className="financeiro-acoes">
-          <button
-            className="financeiro-botao financeiro-botao-receita"
-            type="button"
-            onClick={() => abrirCadastro('receita')}
-          >
-            + Nova Receita
-          </button>
-          <button
-            className="financeiro-botao financeiro-botao-despesa"
-            type="button"
-            onClick={() => abrirCadastro('despesa')}
-          >
-            + Nova Despesa
-          </button>
-        </div>
-      </header>
+        }
+      >
+        <Button variant="success" onClick={() => abrirCadastro('receita')}>
+          + Nova Receita
+        </Button>
+        <Button variant="danger" onClick={() => abrirCadastro('despesa')}>
+          + Nova Despesa
+        </Button>
+      </PageHeader>
 
-      {mensagem && <p className="financeiro-mensagem" role="status">{mensagem}</p>}
+      {mensagem && (
+        <Alert
+          variant="success"
+          role="status"
+          className="py-2"
+          dismissible
+          onClose={() => setMensagem('')}
+        >
+          {mensagem}
+        </Alert>
+      )}
 
-      <section className="financeiro-indicadores" aria-label="Resumo financeiro do mês">
+      <Row className="g-3 mb-4" aria-label="Resumo financeiro do mês">
         {indicadores.map((indicador) => (
-          <article className={`financeiro-card financeiro-card-${indicador.cor}`} key={indicador.titulo}>
-            <span className={`financeiro-icone financeiro-icone-${indicador.cor}`} aria-hidden="true">
-              {indicador.icone}
-            </span>
-            <div className="financeiro-card-conteudo">
-              <span className="financeiro-card-titulo">{indicador.titulo}</span>
-              <strong>{indicador.valor}</strong>
-              <small>{indicador.variacao}</small>
-            </div>
-          </article>
+          <Col key={indicador.titulo} xs={12} sm={6} xl={3}>
+            <IndicatorCard
+              icone={indicador.icone}
+              tom={indicador.tom}
+              titulo={indicador.titulo}
+              valor={indicador.valor}
+              detalhe={indicador.variacao}
+            />
+          </Col>
         ))}
-      </section>
+      </Row>
 
-      <section className="financeiro-tabela-container">
-        <header className="financeiro-tabela-header">
+      <Card>
+        <Card.Header className="bg-white d-flex flex-wrap align-items-center justify-content-between gap-3 py-3">
           <div>
-            <h2>Movimentações Financeiras</h2>
-            <p>{lancamentosFiltrados.length} lançamentos no período</p>
+            <h2 className="fs-5 fw-bold mb-0">Movimentações Financeiras</h2>
+            <small className="text-secondary">{lancamentosFiltrados.length} lançamentos no período</small>
           </div>
-          <div className="financeiro-filtros">
-            <label>
-              <span>Tipo</span>
-              <select value={filtroTipo} onChange={(evento) => setFiltroTipo(evento.target.value)}>
+          <div className="d-flex flex-wrap gap-3">
+            <Form.Group controlId="filtro-tipo" className="d-flex align-items-center gap-2">
+              <Form.Label className="small text-secondary mb-0">Tipo</Form.Label>
+              <Form.Select
+                size="sm"
+                value={filtroTipo}
+                onChange={(evento) => setFiltroTipo(evento.target.value)}
+              >
                 <option>Todos os tipos</option>
                 <option value="receita">Receita</option>
                 <option value="despesa">Despesa</option>
-              </select>
-            </label>
-            <label>
-              <span>Status</span>
-              <select value={filtroStatus} onChange={(evento) => setFiltroStatus(evento.target.value)}>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group controlId="filtro-status" className="d-flex align-items-center gap-2">
+              <Form.Label className="small text-secondary mb-0">Status</Form.Label>
+              <Form.Select
+                size="sm"
+                value={filtroStatus}
+                onChange={(evento) => setFiltroStatus(evento.target.value)}
+              >
                 <option>Todos os status</option>
                 <option>Pago</option>
                 <option>Pendente</option>
-              </select>
-            </label>
+              </Form.Select>
+            </Form.Group>
           </div>
-        </header>
+        </Card.Header>
 
-        <div className="financeiro-tabela-rolagem">
-          <table className="financeiro-tabela">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Descrição</th>
-                <th>Paciente / Fornecedor</th>
-                <th>Tipo</th>
-                <th>Pagamento</th>
-                <th>Valor</th>
-                <th>Status</th>
-                <th>Ações</th>
+        <Table responsive hover className="align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Paciente / Fornecedor</th>
+              <th>Tipo</th>
+              <th>Pagamento</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lancamentosFiltrados.map((lancamento) => (
+              <tr key={lancamento.id}>
+                <td className="text-nowrap">{new Date(`${lancamento.data}T00:00:00`).toLocaleDateString('pt-BR')}</td>
+                <td className="col-descricao">
+                  <strong>{lancamento.descricao}</strong>
+                  {lancamento.categoria && (
+                    <div className="small text-secondary">{lancamento.categoria}</div>
+                  )}
+                </td>
+                <td>{lancamento.pessoa || '—'}</td>
+                <td>
+                  <StatusBadge status={lancamento.tipo === 'receita' ? 'Receita' : 'Despesa'} />
+                </td>
+                <td className="text-nowrap">{lancamento.pagamento || '—'}</td>
+                <td
+                  className={`fw-bold text-nowrap ${
+                    lancamento.tipo === 'receita' ? 'text-success' : 'text-danger'
+                  }`}
+                >
+                  {lancamento.tipo === 'receita' ? '+ ' : '- '}
+                  {moeda.format(Number(lancamento.valor))}
+                </td>
+                <td><StatusBadge status={lancamento.status} /></td>
+                <td>
+                  <div className="d-flex gap-2">
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      title="Editar lançamento"
+                      aria-label={`Editar ${lancamento.descricao}`}
+                      onClick={() => abrirEdicao(lancamento)}
+                    >
+                      ✎
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      title="Excluir lançamento"
+                      aria-label={`Excluir ${lancamento.descricao}`}
+                      onClick={() => excluirLancamento(lancamento)}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {lancamentosFiltrados.map((lancamento) => (
-                <tr key={lancamento.id}>
-                  <td>{new Date(`${lancamento.data}T00:00:00`).toLocaleDateString('pt-BR')}</td>
-                  <td className="financeiro-descricao">
-                    <strong>{lancamento.descricao}</strong>
-                    {lancamento.categoria && <small>{lancamento.categoria}</small>}
-                  </td>
-                  <td>{lancamento.pessoa || '—'}</td>
-                  <td><span className={classeTipo(lancamento.tipo)}>{lancamento.tipo === 'receita' ? 'Receita' : 'Despesa'}</span></td>
-                  <td>{lancamento.pagamento || '—'}</td>
-                  <td className={`financeiro-valor financeiro-valor-${lancamento.tipo}`}>
-                    {lancamento.tipo === 'receita' ? '+ ' : '- '}
-                    {moeda.format(Number(lancamento.valor))}
-                  </td>
-                  <td><span className={classeStatus(lancamento.status)}>{lancamento.status}</span></td>
-                  <td>
-                    <div className="financeiro-acoes-linha">
-                      <button
-                        className="financeiro-acao financeiro-acao-editar"
-                        type="button"
-                        title="Editar lançamento"
-                        aria-label={`Editar ${lancamento.descricao}`}
-                        onClick={() => abrirEdicao(lancamento)}
-                      >
-                        ✎
-                      </button>
-                      <button
-                        className="financeiro-acao financeiro-acao-excluir"
-                        type="button"
-                        title="Excluir lançamento"
-                        aria-label={`Excluir ${lancamento.descricao}`}
-                        onClick={() => excluirLancamento(lancamento)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {lancamentosFiltrados.length === 0 && (
-                <tr>
-                  <td className="financeiro-vazio" colSpan="8">
-                    Nenhuma movimentação encontrada para os filtros selecionados.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            ))}
+            {lancamentosFiltrados.length === 0 && (
+              <tr>
+                <td colSpan="8" className="text-center text-secondary py-4">
+                  Nenhuma movimentação encontrada para os filtros selecionados.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+      </Card>
 
       {modal && (
         <NovaMovimentacao
@@ -413,7 +423,6 @@ export default function Financeiro() {
           onSave={salvarLancamento}
         />
       )}
-      </main>
-    </div>
+    </AppLayout>
   );
 }

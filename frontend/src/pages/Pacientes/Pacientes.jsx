@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../App.css';
-import Sidebar from '../../components/SideBar';
+import {
+  Card, Table, Button, Form, InputGroup, ToggleButton, ToggleButtonGroup, Row, Col,
+} from 'react-bootstrap';
+import AppLayout from '../../components/AppLayout';
+import PageHeader from '../../components/PageHeader';
+import StatusBadge from '../../components/StatusBadge';
 
 const pacientesIniciais = [
   { id: 1, nome: 'Maria Clara Oliveira Santos', email: 'mariaclara@email.com', cpf: '345.678.901-23', telefone: '(11) 98765-4321', ultimaConsulta: '15/08/2025', status: 'Ativo', inicial: 'MC', cor: '#e11d48' },
@@ -16,104 +20,105 @@ export default function Pacientes() {
   const [filtroStatus, setFiltroStatus] = useState('Todos');
   const [busca, setBusca] = useState('');
 
-  const pacientesFiltrados = pacientesIniciais.filter(p => {
+  const pacientesFiltrados = pacientesIniciais.filter((p) => {
     const atendeFiltroStatus = filtroStatus === 'Todos' || p.status === filtroStatus;
-    const atendeBusca = p.nome.toLowerCase().includes(busca.toLowerCase()) || 
-                        p.cpf.includes(busca) || 
-                        p.email.toLowerCase().includes(busca.toLowerCase());
+    const atendeBusca =
+      p.nome.toLowerCase().includes(busca.toLowerCase()) ||
+      p.cpf.includes(busca) ||
+      p.email.toLowerCase().includes(busca.toLowerCase());
     return atendeFiltroStatus && atendeBusca;
   });
 
   return (
-    <div className="dashboard-layout">
-    <Sidebar />
+    <AppLayout>
+      <PageHeader
+        titulo="Pacientes"
+        subtitulo={`${pacientesIniciais.length} pacientes cadastrados`}
+      >
+        <Button>+ Novo Paciente</Button>
+      </PageHeader>
 
-    <div className="page-container">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Pacientes</h1>
-          <p className="page-subtitle">{pacientesIniciais.length} pacientes cadastrados</p>
-        </div>
-        <button className="btn-primary">+ Novo Paciente</button>
-      </div>
+      <Card>
+        <Card.Body className="border-bottom">
+          <Row className="g-2 align-items-center justify-content-between">
+            <Col md={6} lg={5}>
+              <InputGroup>
+                <InputGroup.Text>🔍</InputGroup.Text>
+                <Form.Control
+                  placeholder="Buscar por nome, CPF ou e-mail..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                />
+              </InputGroup>
+            </Col>
 
-      <div className="card">
-        {/* Barra Superior de Busca e Filtros */}
-        <div className="table-filter-bar">
-          <div className="search-box">
-            <span className="search-icon">🔍</span>
-            <input 
-              type="text" 
-              placeholder="Buscar por nome, CPF ou e-mail..." 
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
-
-          <div className="filter-buttons">
-            {['Todos', 'Ativo', 'Inativo'].map(status => (
-              <button 
-                key={status}
-                className={`btn-filter ${filtroStatus === status ? 'active' : ''}`}
-                onClick={() => setFiltroStatus(status)}
+            <Col xs="auto">
+              <ToggleButtonGroup
+                type="radio"
+                name="filtro-status"
+                value={filtroStatus}
+                onChange={setFiltroStatus}
+                size="sm"
               >
-                {status === 'Todos' ? 'Todos' : status === 'Ativo' ? 'Ativo' : 'Inativo'}
-              </button>
-            ))}
-          </div>
-        </div>
+                {['Todos', 'Ativo', 'Inativo'].map((status) => (
+                  <ToggleButton
+                    key={status}
+                    id={`filtro-${status}`}
+                    value={status}
+                    variant="outline-primary"
+                  >
+                    {status}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            </Col>
+          </Row>
+        </Card.Body>
 
-        {/* Tabela de Pacientes */}
-        <table className="table">
+        <Table responsive hover className="align-middle mb-0">
           <thead>
             <tr>
-              <th>PACIENTE</th>
+              <th>Paciente</th>
               <th>CPF</th>
-              <th>TELEFONE</th>
-              <th>ÚLTIMA CONSULTA</th>
-              <th>STATUS</th>
-              <th>AÇÕES</th>
+              <th>Telefone</th>
+              <th>Última consulta</th>
+              <th>Status</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
             {pacientesFiltrados.map((p) => (
               <tr key={p.id}>
-                <td className="avatar-cell">
-                  <div className="avatar" style={{ backgroundColor: p.cor }}>
-                    {p.inicial}
-                  </div>
-                  <div>
-                    <strong>{p.nome}</strong>
-                    <div className="page-subtitle">{p.email}</div>
+                <td>
+                  <div className="d-flex align-items-center gap-3">
+                    <div className="avatar" style={{ backgroundColor: p.cor }}>{p.inicial}</div>
+                    <div>
+                      <strong>{p.nome}</strong>
+                      <div className="small text-secondary">{p.email}</div>
+                    </div>
                   </div>
                 </td>
-                <td className="table-text-muted">{p.cpf}</td>
-                <td className="table-text-muted">{p.telefone}</td>
-                <td className="table-text-muted">{p.ultimaConsulta}</td>
+                <td className="text-secondary">{p.cpf}</td>
+                <td className="text-secondary">{p.telefone}</td>
+                <td className="text-secondary">{p.ultimaConsulta}</td>
+                <td><StatusBadge status={p.status} /></td>
                 <td>
-                  <span className={p.status === 'Ativo' ? 'badge-ativo' : 'badge-inativo'}>
-                    {p.status}
-                  </span>
-                </td>
-                <td>
-                  <div className="action-buttons-cell">
-                    <button 
-                      className="btn-action-outline"
+                  <div className="d-flex gap-2">
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
                       onClick={() => navigate('/prontuario')}
                     >
                       Prontuário
-                    </button>
-                    <button className="btn-action-outline">
-                      Editar
-                    </button>
+                    </Button>
+                    <Button variant="outline-secondary" size="sm">Editar</Button>
                   </div>
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
-    </div>
-    </div>
+        </Table>
+      </Card>
+    </AppLayout>
   );
 }

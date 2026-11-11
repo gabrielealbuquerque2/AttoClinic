@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import Campo from '../../components/Campo';
 
 const categorias = [
   'Anestésicos',
@@ -39,15 +41,6 @@ export default function NovoMaterial({
       : formularioVazio
   ));
   const [erros, setErros] = useState({});
-
-  useEffect(() => {
-    function fecharComEscape(evento) {
-      if (evento.key === 'Escape') onClose();
-    }
-
-    window.addEventListener('keydown', fecharComEscape);
-    return () => window.removeEventListener('keydown', fecharComEscape);
-  }, [onClose]);
 
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
@@ -90,10 +83,6 @@ export default function NovoMaterial({
     });
   }
 
-  function fecharAoClicarNoFundo(evento) {
-    if (evento.target === evento.currentTarget) onClose();
-  }
-
   function excluir() {
     if (!material) return;
     const confirmado = window.confirm(
@@ -103,173 +92,145 @@ export default function NovoMaterial({
   }
 
   return (
-    <div className="novo-material-overlay" onMouseDown={fecharAoClicarNoFundo}>
-      <section
-        className="novo-material-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="novo-material-titulo"
-      >
-        <header className="novo-material-header">
+    <Modal show onHide={onClose} centered>
+      <Form onSubmit={salvar} noValidate>
+        <Modal.Header closeButton>
           <div>
-            <h2 id="novo-material-titulo">{material ? 'Editar Material' : 'Novo Material'}</h2>
-            <p>{material ? 'Atualizar material do estoque' : 'Cadastrar material no estoque'}</p>
+            <Modal.Title as="h2" className="fs-5 fw-bold">
+              {material ? 'Editar Material' : 'Novo Material'}
+            </Modal.Title>
+            <small className="text-secondary">
+              {material ? 'Atualizar material do estoque' : 'Cadastrar material no estoque'}
+            </small>
           </div>
-          <button
-            className="novo-material-close"
-            type="button"
-            aria-label="Fechar cadastro de material"
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </header>
+        </Modal.Header>
 
-        <form className="novo-material-form" onSubmit={salvar} noValidate>
-          <div className="novo-material-fields">
-            <label className="novo-material-field" htmlFor="novo-material-nome">
-              <span>Nome do Material <i>*</i></span>
-              <input
-                id="novo-material-nome"
-                name="nome"
-                placeholder="Ex: Luvas descartáveis P"
-                value={formulario.nome}
+        <Modal.Body>
+          <Campo
+            id="novo-material-nome"
+            name="nome"
+            label="Nome do Material"
+            obrigatorio
+            placeholder="Ex: Luvas descartáveis P"
+            value={formulario.nome}
+            onChange={atualizarCampo}
+            erro={erros.nome}
+          />
+
+          <Row>
+            <Col sm={6}>
+              <Campo
+                id="novo-material-categoria"
+                name="categoria"
+                label="Categoria"
+                obrigatorio
+                tipo="select"
+                value={formulario.categoria}
                 onChange={atualizarCampo}
-                aria-invalid={Boolean(erros.nome)}
-              />
-              {erros.nome && <small>{erros.nome}</small>}
-            </label>
-
-            <div className="novo-material-row">
-              <label className="novo-material-field" htmlFor="novo-material-categoria">
-                <span>Categoria <i>*</i></span>
-                <select
-                  id="novo-material-categoria"
-                  name="categoria"
-                  value={formulario.categoria}
-                  onChange={atualizarCampo}
-                  aria-invalid={Boolean(erros.categoria)}
-                >
-                  <option value="">Selecione...</option>
-                  {categorias.map((categoria) => (
-                    <option key={categoria}>{categoria}</option>
-                  ))}
-                </select>
-                {erros.categoria && <small>{erros.categoria}</small>}
-              </label>
-
-              <label className="novo-material-field" htmlFor="novo-material-unidade">
-                <span>Unidade <i>*</i></span>
-                <select
-                  id="novo-material-unidade"
-                  name="unidade"
-                  value={formulario.unidade}
-                  onChange={atualizarCampo}
-                  aria-invalid={Boolean(erros.unidade)}
-                >
-                  <option value="">Selecione...</option>
-                  {unidades.map((unidade) => (
-                    <option key={unidade} value={unidade}>{unidade}</option>
-                  ))}
-                </select>
-                {erros.unidade && <small>{erros.unidade}</small>}
-              </label>
-            </div>
-
-            <div className="novo-material-row">
-              <label className="novo-material-field" htmlFor="novo-material-quantidade">
-                <span>Quantidade Inicial <i>*</i></span>
-                <input
-                  id="novo-material-quantidade"
-                  name="quantidade"
-                  type="number"
-                  min="0"
-                  step="any"
-                  value={formulario.quantidade}
-                  onChange={atualizarCampo}
-                  aria-invalid={Boolean(erros.quantidade)}
-                />
-                {erros.quantidade && <small>{erros.quantidade}</small>}
-              </label>
-              <label className="novo-material-field" htmlFor="novo-material-minimo">
-                <span>Estoque Mínimo <i>*</i></span>
-                <input
-                  id="novo-material-minimo"
-                  name="quantidadeMinima"
-                  type="number"
-                  min="0"
-                  step="any"
-                  value={formulario.quantidadeMinima}
-                  onChange={atualizarCampo}
-                  aria-invalid={Boolean(erros.quantidadeMinima)}
-                />
-                {erros.quantidadeMinima && <small>{erros.quantidadeMinima}</small>}
-              </label>
-            </div>
-
-            <div className="novo-material-row">
-              <label className="novo-material-field" htmlFor="novo-material-validade">
-                <span>Data de Validade</span>
-                <input
-                  id="novo-material-validade"
-                  name="validade"
-                  type="date"
-                  value={formulario.validade}
-                  onChange={atualizarCampo}
-                />
-              </label>
-              <label className="novo-material-field" htmlFor="novo-material-fornecedor">
-                <span>Fornecedor</span>
-                <input
-                  id="novo-material-fornecedor"
-                  name="fornecedor"
-                  placeholder="Nome do fornecedor"
-                  value={formulario.fornecedor}
-                  onChange={atualizarCampo}
-                />
-              </label>
-            </div>
-
-            <label className="novo-material-field" htmlFor="novo-material-observacoes">
-              <span>Observações</span>
-              <textarea
-                id="novo-material-observacoes"
-                name="observacoes"
-                placeholder="Informações adicionais..."
-                rows="3"
-                value={formulario.observacoes}
-                onChange={atualizarCampo}
-              />
-            </label>
-          </div>
-
-          <footer className="novo-material-footer">
-            <div className="novo-material-footer-acoes">
-              {material && (
-                <button
-                  className="estoque-botao novo-material-delete"
-                  type="button"
-                  onClick={excluir}
-                >
-                  Excluir Material
-                </button>
-              )}
-            </div>
-            <div className="novo-material-footer-acoes">
-              <button
-                className="estoque-botao estoque-botao-secundario"
-                type="button"
-                onClick={onClose}
+                erro={erros.categoria}
               >
-                Cancelar
-              </button>
-              <button className="estoque-botao estoque-botao-principal" type="submit">
-                {material ? 'Salvar Alterações' : 'Cadastrar Material'}
-              </button>
-            </div>
-          </footer>
-        </form>
-      </section>
-    </div>
+                <option value="">Selecione...</option>
+                {categorias.map((categoria) => (
+                  <option key={categoria}>{categoria}</option>
+                ))}
+              </Campo>
+            </Col>
+            <Col sm={6}>
+              <Campo
+                id="novo-material-unidade"
+                name="unidade"
+                label="Unidade"
+                obrigatorio
+                tipo="select"
+                value={formulario.unidade}
+                onChange={atualizarCampo}
+                erro={erros.unidade}
+              >
+                <option value="">Selecione...</option>
+                {unidades.map((unidade) => (
+                  <option key={unidade} value={unidade}>{unidade}</option>
+                ))}
+              </Campo>
+            </Col>
+          </Row>
+
+          <Row>
+            <Col sm={6}>
+              <Campo
+                id="novo-material-quantidade"
+                name="quantidade"
+                label="Quantidade Inicial"
+                obrigatorio
+                type="number"
+                min="0"
+                step="any"
+                value={formulario.quantidade}
+                onChange={atualizarCampo}
+                erro={erros.quantidade}
+              />
+            </Col>
+            <Col sm={6}>
+              <Campo
+                id="novo-material-minimo"
+                name="quantidadeMinima"
+                label="Estoque Mínimo"
+                obrigatorio
+                type="number"
+                min="0"
+                step="any"
+                value={formulario.quantidadeMinima}
+                onChange={atualizarCampo}
+                erro={erros.quantidadeMinima}
+              />
+            </Col>
+          </Row>
+
+          <Row>
+            <Col sm={6}>
+              <Campo
+                id="novo-material-validade"
+                name="validade"
+                label="Data de Validade"
+                type="date"
+                value={formulario.validade}
+                onChange={atualizarCampo}
+              />
+            </Col>
+            <Col sm={6}>
+              <Campo
+                id="novo-material-fornecedor"
+                name="fornecedor"
+                label="Fornecedor"
+                placeholder="Nome do fornecedor"
+                value={formulario.fornecedor}
+                onChange={atualizarCampo}
+              />
+            </Col>
+          </Row>
+
+          <Campo
+            id="novo-material-observacoes"
+            name="observacoes"
+            label="Observações"
+            tipo="textarea"
+            rows={3}
+            placeholder="Informações adicionais..."
+            value={formulario.observacoes}
+            onChange={atualizarCampo}
+            className="mb-0"
+          />
+        </Modal.Body>
+
+        <Modal.Footer>
+          {material && (
+            <Button variant="outline-danger" className="me-auto" onClick={excluir}>
+              Excluir Material
+            </Button>
+          )}
+          <Button variant="outline-secondary" onClick={onClose}>Cancelar</Button>
+          <Button type="submit">{material ? 'Salvar Alterações' : 'Cadastrar Material'}</Button>
+        </Modal.Footer>
+      </Form>
+    </Modal>
   );
 }

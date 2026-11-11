@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import Campo from '../../components/Campo';
 
 const pagamentos = ['Pix', 'Cartão', 'Dinheiro', 'Transferência'];
 const procedimentos = [
@@ -69,15 +71,6 @@ export default function NovaMovimentacao({
   const ehReceita = tipo === 'receita';
   const emEdicao = Boolean(lancamento);
 
-  useEffect(() => {
-    function fecharComEscape(evento) {
-      if (evento.key === 'Escape') onClose();
-    }
-
-    window.addEventListener('keydown', fecharComEscape);
-    return () => window.removeEventListener('keydown', fecharComEscape);
-  }, [onClose]);
-
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
     setFormulario((atual) => ({ ...atual, [name]: value }));
@@ -126,228 +119,198 @@ export default function NovaMovimentacao({
     });
   }
 
-  function fecharAoClicarNoFundo(evento) {
-    if (evento.target === evento.currentTarget) onClose();
-  }
-
   const titulo = ehReceita ? 'Nova Receita' : 'Nova Despesa';
   const tituloEdicao = ehReceita ? 'Editar Receita' : 'Editar Despesa';
 
+  const cor = ehReceita ? 'success' : 'danger';
+
   return (
-    <div className={`financeiro-modal-overlay financeiro-modal-overlay-${tipo}`} onMouseDown={fecharAoClicarNoFundo}>
-      <section
-        className={`financeiro-modal financeiro-modal-${tipo}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="financeiro-modal-titulo"
-      >
-        <header className="financeiro-modal-header">
-          <span className={`financeiro-modal-icone financeiro-modal-icone-${tipo}`} aria-hidden="true">
+    <Modal show onHide={onClose} centered>
+      <Form onSubmit={registrar} noValidate>
+        <Modal.Header closeButton>
+          <span
+            className={`indicador-icone bg-${cor}-subtle text-${cor}-emphasis me-3`}
+            aria-hidden="true"
+          >
             {ehReceita ? '↑' : '↓'}
           </span>
-          <div className="financeiro-modal-titulos">
-            <h2 id="financeiro-modal-titulo">{emEdicao ? tituloEdicao : titulo}</h2>
-            <p>{ehReceita ? 'Registrar entrada financeira' : 'Registrar saída financeira'}</p>
+          <div>
+            <Modal.Title as="h2" className="fs-5 fw-bold">
+              {emEdicao ? tituloEdicao : titulo}
+            </Modal.Title>
+            <small className="text-secondary">
+              {ehReceita ? 'Registrar entrada financeira' : 'Registrar saída financeira'}
+            </small>
           </div>
-          <button
-            className="financeiro-modal-fechar"
-            type="button"
-            aria-label="Fechar formulário"
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </header>
+        </Modal.Header>
 
-        <form className="financeiro-modal-form" onSubmit={registrar} noValidate>
-          <div className="financeiro-modal-campos">
-            {ehReceita ? (
-              <>
-                <label className="financeiro-campo" htmlFor="financeiro-paciente">
-                  <span>Paciente <i>*</i></span>
-                  <select
-                    id="financeiro-paciente"
-                    name="paciente"
-                    value={formulario.paciente}
-                    onChange={atualizarCampo}
-                    aria-invalid={Boolean(erros.paciente)}
-                  >
-                    <option value="">Selecionar paciente...</option>
-                    {pacientes.map((paciente) => (
-                      <option key={paciente}>{paciente}</option>
-                    ))}
-                  </select>
-                  {erros.paciente && <small>{erros.paciente}</small>}
-                </label>
+        <Modal.Body>
+          {ehReceita ? (
+            <>
+              <Campo
+                id="financeiro-paciente"
+                name="paciente"
+                label="Paciente"
+                obrigatorio
+                tipo="select"
+                value={formulario.paciente}
+                onChange={atualizarCampo}
+                erro={erros.paciente}
+              >
+                <option value="">Selecionar paciente...</option>
+                {pacientes.map((paciente) => (
+                  <option key={paciente}>{paciente}</option>
+                ))}
+              </Campo>
 
-                <label className="financeiro-campo" htmlFor="financeiro-procedimento">
-                  <span>Procedimento</span>
-                  <select
-                    id="financeiro-procedimento"
-                    name="procedimento"
-                    value={formulario.procedimento}
-                    onChange={atualizarCampo}
-                  >
-                    <option value="">Selecionar procedimento...</option>
-                    {procedimentos.map((procedimento) => (
-                      <option key={procedimento}>{procedimento}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="financeiro-campo" htmlFor="financeiro-descricao">
-                  <span>Descrição</span>
-                  <input
-                    id="financeiro-descricao"
-                    name="descricao"
-                    placeholder="Descrição da receita..."
-                    value={formulario.descricao}
-                    onChange={atualizarCampo}
-                  />
-                </label>
-              </>
-            ) : (
-              <>
-                <label className="financeiro-campo" htmlFor="financeiro-descricao">
-                  <span>Descrição <i>*</i></span>
-                  <input
-                    id="financeiro-descricao"
-                    name="descricao"
-                    placeholder="Descreva a despesa..."
-                    value={formulario.descricao}
-                    onChange={atualizarCampo}
-                    aria-invalid={Boolean(erros.descricao)}
-                  />
-                  {erros.descricao && <small>{erros.descricao}</small>}
-                </label>
-
-                <label className="financeiro-campo" htmlFor="financeiro-categoria">
-                  <span>Categoria <i>*</i></span>
-                  <select
-                    id="financeiro-categoria"
-                    name="categoria"
-                    value={formulario.categoria}
-                    onChange={atualizarCampo}
-                    aria-invalid={Boolean(erros.categoria)}
-                  >
-                    <option value="">Selecionar categoria...</option>
-                    {categoriasDespesa.map((categoria) => (
-                      <option key={categoria}>{categoria}</option>
-                    ))}
-                  </select>
-                  {erros.categoria && <small>{erros.categoria}</small>}
-                </label>
-
-                <label className="financeiro-campo" htmlFor="financeiro-fornecedor">
-                  <span>Fornecedor</span>
-                  <input
-                    id="financeiro-fornecedor"
-                    name="fornecedor"
-                    placeholder="Nome do fornecedor..."
-                    value={formulario.fornecedor}
-                    onChange={atualizarCampo}
-                  />
-                </label>
-              </>
-            )}
-
-            <div className="financeiro-campo-linha">
-              <label className="financeiro-campo" htmlFor="financeiro-valor">
-                <span>Valor (R$) <i>*</i></span>
-                <input
-                  id="financeiro-valor"
-                  name="valor"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  placeholder="0,00"
-                  value={formulario.valor}
-                  onChange={atualizarCampo}
-                  aria-invalid={Boolean(erros.valor)}
-                />
-                {erros.valor && <small>{erros.valor}</small>}
-              </label>
-
-              <label className="financeiro-campo" htmlFor="financeiro-data">
-                <span>Data <i>*</i></span>
-                <input
-                  id="financeiro-data"
-                  name="data"
-                  type="date"
-                  value={formulario.data}
-                  onChange={atualizarCampo}
-                  aria-invalid={Boolean(erros.data)}
-                />
-                {erros.data && <small>{erros.data}</small>}
-              </label>
-            </div>
-
-            {ehReceita ? (
-              <label className="financeiro-campo" htmlFor="financeiro-pagamento">
-                <span>Forma de Pagamento</span>
-                <select
-                  id="financeiro-pagamento"
-                  name="pagamento"
-                  value={formulario.pagamento}
-                  onChange={atualizarCampo}
-                >
-                  <option value="">Selecionar forma de pagamento...</option>
-                  {pagamentos.map((pagamento) => (
-                    <option key={pagamento}>{pagamento}</option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-
-            <label className="financeiro-campo" htmlFor="financeiro-status">
-              <span>Status</span>
-              <select
-                id="financeiro-status"
-                name="status"
-                value={formulario.status}
+              <Campo
+                id="financeiro-procedimento"
+                name="procedimento"
+                label="Procedimento"
+                tipo="select"
+                value={formulario.procedimento}
                 onChange={atualizarCampo}
               >
-                <option>Pendente</option>
-                <option>Pago</option>
-              </select>
-            </label>
+                <option value="">Selecionar procedimento...</option>
+                {procedimentos.map((procedimento) => (
+                  <option key={procedimento}>{procedimento}</option>
+                ))}
+              </Campo>
 
-            {!ehReceita && (
-              <label className="financeiro-campo" htmlFor="financeiro-observacoes">
-                <span>Observações</span>
-                <textarea
-                  id="financeiro-observacoes"
-                  name="observacoes"
-                  placeholder="Observações adicionais..."
-                  rows="3"
-                  value={formulario.observacoes}
-                  onChange={atualizarCampo}
-                />
-              </label>
-            )}
-          </div>
+              <Campo
+                id="financeiro-descricao"
+                name="descricao"
+                label="Descrição"
+                placeholder="Descrição da receita..."
+                value={formulario.descricao}
+                onChange={atualizarCampo}
+              />
+            </>
+          ) : (
+            <>
+              <Campo
+                id="financeiro-descricao"
+                name="descricao"
+                label="Descrição"
+                obrigatorio
+                placeholder="Descreva a despesa..."
+                value={formulario.descricao}
+                onChange={atualizarCampo}
+                erro={erros.descricao}
+              />
 
-          <footer className="financeiro-modal-footer">
-            <button
-              className="financeiro-modal-botao financeiro-modal-botao-cancelar"
-              type="button"
-              onClick={onClose}
+              <Campo
+                id="financeiro-categoria"
+                name="categoria"
+                label="Categoria"
+                obrigatorio
+                tipo="select"
+                value={formulario.categoria}
+                onChange={atualizarCampo}
+                erro={erros.categoria}
+              >
+                <option value="">Selecionar categoria...</option>
+                {categoriasDespesa.map((categoria) => (
+                  <option key={categoria}>{categoria}</option>
+                ))}
+              </Campo>
+
+              <Campo
+                id="financeiro-fornecedor"
+                name="fornecedor"
+                label="Fornecedor"
+                placeholder="Nome do fornecedor..."
+                value={formulario.fornecedor}
+                onChange={atualizarCampo}
+              />
+            </>
+          )}
+
+          <Row>
+            <Col sm={6}>
+              <Campo
+                id="financeiro-valor"
+                name="valor"
+                label="Valor (R$)"
+                obrigatorio
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0,00"
+                value={formulario.valor}
+                onChange={atualizarCampo}
+                erro={erros.valor}
+              />
+            </Col>
+            <Col sm={6}>
+              <Campo
+                id="financeiro-data"
+                name="data"
+                label="Data"
+                obrigatorio
+                type="date"
+                value={formulario.data}
+                onChange={atualizarCampo}
+                erro={erros.data}
+              />
+            </Col>
+          </Row>
+
+          {ehReceita && (
+            <Campo
+              id="financeiro-pagamento"
+              name="pagamento"
+              label="Forma de Pagamento"
+              tipo="select"
+              value={formulario.pagamento}
+              onChange={atualizarCampo}
             >
-              Cancelar
-            </button>
-            <button
-              className={`financeiro-modal-botao financeiro-modal-botao-${tipo}`}
-              type="submit"
-            >
-              {emEdicao
-                ? 'Salvar alterações'
-                : ehReceita
-                  ? 'Registrar Receita'
-                  : 'Registrar Despesa'}
-            </button>
-          </footer>
-        </form>
-      </section>
-    </div>
+              <option value="">Selecionar forma de pagamento...</option>
+              {pagamentos.map((pagamento) => (
+                <option key={pagamento}>{pagamento}</option>
+              ))}
+            </Campo>
+          )}
+
+          <Campo
+            id="financeiro-status"
+            name="status"
+            label="Status"
+            tipo="select"
+            value={formulario.status}
+            onChange={atualizarCampo}
+            className={ehReceita ? 'mb-0' : 'mb-3'}
+          >
+            <option>Pendente</option>
+            <option>Pago</option>
+          </Campo>
+
+          {!ehReceita && (
+            <Campo
+              id="financeiro-observacoes"
+              name="observacoes"
+              label="Observações"
+              tipo="textarea"
+              rows={3}
+              placeholder="Observações adicionais..."
+              value={formulario.observacoes}
+              onChange={atualizarCampo}
+              className="mb-0"
+            />
+          )}
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={onClose}>Cancelar</Button>
+          <Button type="submit" variant={cor}>
+            {emEdicao
+              ? 'Salvar alterações'
+              : ehReceita
+                ? 'Registrar Receita'
+                : 'Registrar Despesa'}
+          </Button>
+        </Modal.Footer>
+      </Form>
+    </Modal>
   );
 }

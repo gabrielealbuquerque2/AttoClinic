@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Alert, Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import Campo from '../../components/Campo';
 
 const pacientesCadastrados = [
   'Maria Clara Oliveira Santos',
@@ -44,15 +46,6 @@ export default function NovaConsulta({ dataInicial, onClose, onSave }) {
   });
   const [erros, setErros] = useState({});
 
-  useEffect(() => {
-    function fecharComEscape(evento) {
-      if (evento.key === 'Escape') onClose();
-    }
-
-    window.addEventListener('keydown', fecharComEscape);
-    return () => window.removeEventListener('keydown', fecharComEscape);
-  }, [onClose]);
-
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
     setFormulario((atual) => ({ ...atual, [name]: value }));
@@ -76,181 +69,131 @@ export default function NovaConsulta({ dataInicial, onClose, onSave }) {
     onSave(formulario);
   }
 
-  function fecharAoClicarNoFundo(evento) {
-    if (evento.target === evento.currentTarget) onClose();
-  }
-
   return (
-    <div
-      className="nova-consulta-overlay"
-      onMouseDown={fecharAoClicarNoFundo}
-    >
-      <section
-        className="nova-consulta-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="nova-consulta-titulo"
-      >
-        <header className="nova-consulta-cabecalho">
+    <Modal show onHide={onClose} centered>
+      <Form onSubmit={enviarFormulario} noValidate>
+        <Modal.Header closeButton>
           <div>
-            <h2 id="nova-consulta-titulo">Nova Consulta</h2>
-            <p>Preencha os dados para agendar</p>
+            <Modal.Title as="h2" className="fs-5 fw-bold">Nova Consulta</Modal.Title>
+            <small className="text-secondary">Preencha os dados para agendar</small>
           </div>
-          <button
-            className="nova-consulta-fechar"
-            type="button"
-            onClick={onClose}
-            aria-label="Fechar cadastro de consulta"
+        </Modal.Header>
+
+        <Modal.Body>
+          {Object.values(erros).some(Boolean) && (
+            <Alert variant="danger" className="py-2">
+              Confira os campos obrigatórios antes de agendar.
+            </Alert>
+          )}
+
+          <Campo
+            id="consulta-paciente"
+            name="paciente"
+            label="Paciente"
+            obrigatorio
+            placeholder="Nome do paciente..."
+            list="nova-consulta-pacientes"
+            value={formulario.paciente}
+            onChange={atualizarCampo}
+            erro={erros.paciente}
+          />
+          <datalist id="nova-consulta-pacientes">
+            {pacientesCadastrados.map((paciente) => (
+              <option key={paciente} value={paciente} />
+            ))}
+          </datalist>
+
+          <Campo
+            id="consulta-profissional"
+            name="profissional"
+            label="Dentista Responsável"
+            obrigatorio
+            tipo="select"
+            value={formulario.profissional}
+            onChange={atualizarCampo}
+            erro={erros.profissional}
           >
-            ×
-          </button>
-        </header>
+            <option value="">Selecionar dentista...</option>
+            {dentistas.map((dentista) => (
+              <option key={dentista} value={dentista}>{dentista}</option>
+            ))}
+          </Campo>
 
-        <form className="nova-consulta-formulario" onSubmit={enviarFormulario} noValidate>
-          <div className="nova-consulta-campos">
-            {Object.keys(erros).some((campo) => erros[campo]) && (
-              <p className="nova-consulta-erro-geral" role="alert">
-                Confira os campos obrigatórios antes de agendar.
-              </p>
-            )}
-
-            <label className="nova-consulta-campo" htmlFor="consulta-paciente">
-              <span>Paciente <i>*</i></span>
-              <input
-                id="consulta-paciente"
-                name="paciente"
-                type="text"
-                placeholder="Nome do paciente..."
-                list="nova-consulta-pacientes"
-                value={formulario.paciente}
+          <Row>
+            <Col sm={6}>
+              <Campo
+                id="consulta-data"
+                name="data"
+                label="Data"
+                obrigatorio
+                type="date"
+                value={formulario.data}
                 onChange={atualizarCampo}
-                aria-required="true"
-                aria-invalid={Boolean(erros.paciente)}
-                aria-describedby={erros.paciente ? 'erro-paciente' : undefined}
+                erro={erros.data}
               />
-              <datalist id="nova-consulta-pacientes">
-                {pacientesCadastrados.map((paciente) => (
-                  <option key={paciente} value={paciente} />
-                ))}
-              </datalist>
-              {erros.paciente && <small id="erro-paciente">{erros.paciente}</small>}
-            </label>
-
-            <label className="nova-consulta-campo" htmlFor="consulta-profissional">
-              <span>Dentista Responsável <i>*</i></span>
-              <select
-                id="consulta-profissional"
-                name="profissional"
-                value={formulario.profissional}
+            </Col>
+            <Col sm={6}>
+              <Campo
+                id="consulta-horario"
+                name="horario"
+                label="Horário"
+                obrigatorio
+                type="time"
+                value={formulario.horario}
                 onChange={atualizarCampo}
-                aria-required="true"
-                aria-invalid={Boolean(erros.profissional)}
-                aria-describedby={erros.profissional ? 'erro-profissional' : undefined}
-              >
-                <option value="">Selecionar dentista...</option>
-                {dentistas.map((dentista) => (
-                  <option key={dentista} value={dentista}>{dentista}</option>
-                ))}
-              </select>
-              {erros.profissional && <small id="erro-profissional">{erros.profissional}</small>}
-            </label>
-
-            <div className="nova-consulta-linha">
-              <label className="nova-consulta-campo" htmlFor="consulta-data">
-                <span>Data <i>*</i></span>
-                <input
-                  id="consulta-data"
-                  name="data"
-                  type="date"
-                  value={formulario.data}
-                  onChange={atualizarCampo}
-                  aria-required="true"
-                  aria-invalid={Boolean(erros.data)}
-                  aria-describedby={erros.data ? 'erro-data' : undefined}
-                />
-                {erros.data && <small id="erro-data">{erros.data}</small>}
-              </label>
-
-              <label className="nova-consulta-campo" htmlFor="consulta-horario">
-                <span>Horário <i>*</i></span>
-                <input
-                  id="consulta-horario"
-                  name="horario"
-                  type="time"
-                  value={formulario.horario}
-                  onChange={atualizarCampo}
-                  aria-required="true"
-                  aria-invalid={Boolean(erros.horario)}
-                  aria-describedby={erros.horario ? 'erro-horario' : undefined}
-                />
-                {erros.horario && <small id="erro-horario">{erros.horario}</small>}
-              </label>
-            </div>
-
-            <label className="nova-consulta-campo" htmlFor="consulta-procedimento">
-              <span>Procedimento <i>*</i></span>
-              <select
-                id="consulta-procedimento"
-                name="procedimento"
-                value={formulario.procedimento}
-                onChange={atualizarCampo}
-                aria-required="true"
-                aria-invalid={Boolean(erros.procedimento)}
-                aria-describedby={erros.procedimento ? 'erro-procedimento' : undefined}
-              >
-                <option value="">Selecionar procedimento...</option>
-                {procedimentos.map((procedimento) => (
-                  <option key={procedimento} value={procedimento}>{procedimento}</option>
-                ))}
-              </select>
-              {erros.procedimento && <small id="erro-procedimento">{erros.procedimento}</small>}
-            </label>
-
-            <label className="nova-consulta-campo" htmlFor="consulta-status">
-              <span>Status</span>
-              <select
-                id="consulta-status"
-                name="status"
-                value={formulario.status}
-                onChange={atualizarCampo}
-              >
-                <option>Agendado</option>
-                <option>Confirmado</option>
-                <option>Aguardando</option>
-                <option>Cancelado</option>
-              </select>
-            </label>
-
-            <label className="nova-consulta-campo" htmlFor="consulta-observacoes">
-              <span>Observações</span>
-              <textarea
-                id="consulta-observacoes"
-                name="observacoes"
-                placeholder="Observações sobre a consulta..."
-                rows="3"
-                value={formulario.observacoes}
-                onChange={atualizarCampo}
+                erro={erros.horario}
               />
-            </label>
-          </div>
+            </Col>
+          </Row>
 
-          <footer className="nova-consulta-rodape">
-            <button
-              className="nova-consulta-botao nova-consulta-botao-secundario"
-              type="button"
-              onClick={onClose}
-            >
-              Cancelar
-            </button>
-            <button
-              className="nova-consulta-botao nova-consulta-botao-principal"
-              type="submit"
-            >
-              Agendar Consulta
-            </button>
-          </footer>
-        </form>
-      </section>
-    </div>
+          <Campo
+            id="consulta-procedimento"
+            name="procedimento"
+            label="Procedimento"
+            obrigatorio
+            tipo="select"
+            value={formulario.procedimento}
+            onChange={atualizarCampo}
+            erro={erros.procedimento}
+          >
+            <option value="">Selecionar procedimento...</option>
+            {procedimentos.map((procedimento) => (
+              <option key={procedimento} value={procedimento}>{procedimento}</option>
+            ))}
+          </Campo>
+
+          <Campo
+            id="consulta-status"
+            name="status"
+            label="Status"
+            tipo="select"
+            value={formulario.status}
+            onChange={atualizarCampo}
+          >
+            <option>Agendado</option>
+            <option>Confirmado</option>
+            <option>Aguardando</option>
+            <option>Cancelado</option>
+          </Campo>
+
+          <Campo
+            id="consulta-observacoes"
+            name="observacoes"
+            label="Observações"
+            tipo="textarea"
+            rows={3}
+            placeholder="Observações sobre a consulta..."
+            value={formulario.observacoes}
+            onChange={atualizarCampo}
+            className="mb-0"
+          />
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={onClose}>Cancelar</Button>
+          <Button type="submit">Agendar Consulta</Button>
+        </Modal.Footer>
+      </Form>
+    </Modal>
   );
 }

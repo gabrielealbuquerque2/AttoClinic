@@ -1,0 +1,102 @@
+/* Tema AttoClinic sobre o Bootstrap.
+   Importar DEPOIS de 'bootstrap/dist/css/bootstrap.min.css'. */
+
+:root {
+  --bs-primary: #2057a5;
+  --bs-primary-rgb: 32, 87, 165;
+  --bs-primary-text-emphasis: #0d2a52;
+  --bs-primary-bg-subtle: #dbe7f6;
+  --bs-primary-border-subtle: #a9c3e6;
+  --bs-link-color: #2057a5;
+  --bs-link-color-rgb: 32, 87, 165;
+  --bs-link-hover-color: #174785;
+  --bs-body-font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --bs-body-color: #26364d;
+  --bs-body-bg: #ffffff;
+}
+
+/* No Bootstrap 5.3 os botões não leem --bs-primary:
+   as cores ficam nas variáveis --bs-btn-* de cada variante. */
+.btn-primary {
+  --bs-btn-bg: #2057a5;
+  --bs-btn-border-color: #2057a5;
+  --bs-btn-hover-bg: #174785;
+  --bs-btn-hover-border-color: #174785;
+  --bs-btn-active-bg: #174785;
+  --bs-btn-active-border-color: #174785;
+  --bs-btn-disabled-bg: #2057a5;
+  --bs-btn-disabled-border-color: #2057a5;
+  --bs-btn-focus-shadow-rgb: 32, 87, 165;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: #2057a5;
+  --bs-btn-border-color: #2057a5;
+  --bs-btn-hover-bg: #2057a5;
+  --bs-btn-hover-border-color: #2057a5;
+  --bs-btn-active-bg: #2057a5;
+  --bs-btn-active-border-color: #2057a5;
+  --bs-btn-disabled-color: #2057a5;
+  --bs-btn-disabled-border-color: #2057a5;
+  --bs-btn-focus-shadow-rgb: 32, 87, 165;
+}
+
+.btn-link {
+  --bs-btn-color: #2057a5;
+  --bs-btn-hover-color: #174785;
+  --bs-btn-active-color: #174785;
+}
+
+.btn {
+  --bs-btn-border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+.form-control,
+.form-select {
+  border-radius: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #2057a5;
+  box-shadow: 0 0 0 0.2rem rgba(32, 87, 165, 0.15);
+}
+
+.card {
+  --bs-card-border-color: #e2e8f0;
+  --bs-card-border-radius: 0.75rem;
+  --bs-card-inner-border-radius: calc(0.75rem - 1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.modal {
+  --bs-modal-border-radius: 0.9rem;
+}
+
+.table > thead {
+  --bs-table-bg: #f8fafc;
+  --bs-table-color: #64748b;
+}
+
+.table > thead > tr > th {
+  padding: 0.9rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table > tbody > tr > td {
+  padding: 0.9rem 0.75rem;
+}
+
+.table > :not(caption) > * > :first-child {
+  padding-left: 1.25rem;
+}
+
+.table > :not(caption) > * > :last-child {
+  padding-right: 1.25rem;
+}
