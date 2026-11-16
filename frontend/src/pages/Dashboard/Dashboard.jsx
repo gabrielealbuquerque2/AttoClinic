@@ -1,24 +1,12 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Row, Col, Card, Button, ListGroup, InputGroup, Form } from 'react-bootstrap';
+import { Row, Col, Card, Button, ListGroup, InputGroup, Form, Alert } from 'react-bootstrap';
 import AppLayout from '../../components/AppLayout';
 import PageHeader from '../../components/PageHeader';
 import IndicatorCard from '../../components/IndicatorCard';
 import StatusBadge from '../../components/StatusBadge';
-
-const consultasHoje = [
-  { horario: '08:00', paciente: 'Ana Costa Lima', procedimento: 'Limpeza · Dr. Lucas de Oliveira', status: 'Confirmado' },
-  { horario: '09:00', paciente: 'Pedro Souza', procedimento: 'Avaliação · Dr. Lucas de Oliveira', status: 'Confirmado' },
-  { horario: '10:30', paciente: 'Maria Clara Oliveira', procedimento: 'Restauração · Dr. Lucas de Oliveira', status: 'Aguardando' },
-  { horario: '11:00', paciente: 'João Ferreira', procedimento: 'Extração · Dr. Lucas de Oliveira', status: 'Confirmado' },
-  { horario: '14:00', paciente: 'Fernanda Rocha', procedimento: 'Clareamento · Dr. Lucas de Oliveira', status: 'Aguardando' },
-];
-
-const metricas = [
-  { icone: '👥', tom: 'primary', titulo: 'Total de Pacientes', valor: '1.248', detalhe: '+12 este mês' },
-  { icone: '📅', tom: 'info', titulo: 'Consultas Hoje', valor: '8', detalhe: '2 confirmadas' },
-  { icone: '💰', tom: 'warning', titulo: 'Receita do Mês', valor: 'R$ 18.750', detalhe: '+8,2% em relação ao anterior' },
-  { icone: '📦', tom: 'danger', titulo: 'Alertas de Estoque', valor: '3', detalhe: 'Itens em falta' },
-];
+import api, { mensagemDeErro } from '../../services/api';
+import { formatarData, formatarHora, formatarMoeda } from '../../utils/formatar';
 
 const acessoRapido = [
   { icone: '👤', rotulo: 'Novo Paciente', caminho: '/pacientes' },
@@ -27,8 +15,78 @@ const acessoRapido = [
   { icone: '📦', rotulo: 'Estoque', caminho: '/estoque' },
 ];
 
+function dataPorExtenso() {
+  const texto = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+function saudacao() {
+  const hora = new Date().getHours();
+  if (hora < 12) return 'Bom dia';
+  if (hora < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [resumo, setResumo] = useState(null);
+  const [consultasHoje, setConsultasHoje] = useState([]);
+  const [proximaConsulta, setProximaConsulta] = useState(null);
+  const [erro, setErro] = useState('');
+  const [carregando, setCarregando] = useState(true);
+
+  const [termo, setTermo] = useState('');
+  const [resultadoBusca, setResultadoBusca] = useState(null);
+
+  useEffect(() => {
+    async function carregar() {
+      try {
+        const [r, c, p] = await Promise.all([
+          api.get('/dashboard/resumo'),
+          api.get('/dashboard/consultas-hoje'),
+          api.get('/dashboard/proxima-consulta'),
+        ]);
+        setResumo(r.data);
+        setConsultasHoje(c.data);
+        setProximaConsulta(p.data);
+      } catch (e) {
+        setErro(mensagemDeErro(e, 'Erro ao carregar o painel.'));
+      } finally {
+        setCarregando(false);
+      }
+    }
+    carregar();
+  }, []);
+
+  // Busca com pequena espera (debounce) para não chamar o back a cada tecla
+  useEffect(() => {
+    if (!termo.trim()) {
+      setResultadoBusca(null);
+      return undefined;
+    }
+    let cancelado = false;
+    const espera = setTimeout(async () => {
+      try {
+        const { data } = await api.get('/dashboard/buscar', { params: { termo } });
+        if (!cancelado) setResultadoBusca(data);
+      } catch {
+        if (!cancelado) setResultadoBusca({ pacientes: [], consultas: [] });
+      }
+    }, 300);
+    return () => {
+      cancelado = true;
+      clearTimeout(espera);
+    };
+  }, [termo]);
+
+  const metricas = [
+    { icone: '👥', tom: 'primary', titulo: 'Total de Pacientes', valor: resumo?.total_pacientes ?? '—', detalhe: 'Pacientes cadastrados' },
+    { icone: '📅', tom: 'info', titulo: 'Consultas Hoje', valor: resumo?.consultas_hoje ?? '—', detalhe: 'Agendadas para hoje' },
+    { icone: '💰', tom: 'warning', titulo: 'Receita do Mês', valor: resumo ? formatarMoeda(resumo.receita_mes) : '—', detalhe: 'Receitas pagas no mês' },
+    { icone: '📦', tom: 'danger', titulo: 'Alertas de Estoque', valor: resumo?.alertas_estoque ?? '—', detalhe: 'Itens no mínimo ou abaixo' },
+  ];
 
   return (
     <AppLayout>
@@ -38,10 +96,50 @@ export default function Dashboard() {
         </div>
 
         <div className="d-flex align-items-center gap-3">
-          <InputGroup size="sm" className="busca-topo">
-            <InputGroup.Text>🔍</InputGroup.Text>
-            <Form.Control placeholder="Buscar paciente, consulta..." />
-          </InputGroup>
+          <div className="position-relative">
+            <InputGroup size="sm" className="busca-topo">
+              <InputGroup.Text>🔍</InputGroup.Text>
+              <Form.Control
+                placeholder="Buscar paciente, consulta..."
+                value={termo}
+                onChange={(e) => setTermo(e.target.value)}
+              />
+            </InputGroup>
+
+            {resultadoBusca && (
+              <Card className="position-absolute end-0 mt-1 shadow" style={{ zIndex: 10, width: 340 }}>
+                <ListGroup variant="flush">
+                  {resultadoBusca.pacientes.length === 0 && resultadoBusca.consultas.length === 0 && (
+                    <ListGroup.Item className="small text-secondary">Nada encontrado.</ListGroup.Item>
+                  )}
+                  {resultadoBusca.pacientes.map((p) => (
+                    <ListGroup.Item
+                      key={`p-${p.id_paciente}`}
+                      action
+                      className="small"
+                      onClick={() => navigate('/pacientes')}
+                    >
+                      👤 <strong>{p.nome}</strong>
+                      <div className="text-secondary">{p.cpf}</div>
+                    </ListGroup.Item>
+                  ))}
+                  {resultadoBusca.consultas.map((c) => (
+                    <ListGroup.Item
+                      key={`c-${c.id_consulta}`}
+                      action
+                      className="small"
+                      onClick={() => navigate('/agenda')}
+                    >
+                      📅 <strong>{c.paciente}</strong>
+                      <div className="text-secondary">
+                        {formatarData(c.data)} às {formatarHora(c.horario)} · {c.procedimentos ?? 'Sem procedimento'}
+                      </div>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              </Card>
+            )}
+          </div>
 
           <div className="d-flex align-items-center gap-2">
             <span aria-hidden="true">🔔</span>
@@ -54,9 +152,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <PageHeader titulo="Bom dia, Dr. Lucas!" subtitulo="Quinta-feira, 28 de agosto de 2025">
+      <PageHeader titulo={`${saudacao()}, Dr. Lucas!`} subtitulo={dataPorExtenso()}>
         <Button onClick={() => navigate('/agenda')}>📅 Ver Agenda Completa</Button>
       </PageHeader>
+
+      {erro && <Alert variant="danger">{erro}</Alert>}
 
       <Row className="g-3 mb-4">
         {metricas.map((metrica) => (
@@ -72,21 +172,28 @@ export default function Dashboard() {
             <Card.Body>
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <Card.Title as="h3" className="fs-6 fw-bold mb-0">Consultas de Hoje</Card.Title>
-                <StatusBadge status="Agendado">5 agendadas</StatusBadge>
+                <StatusBadge status="Agendado">{consultasHoje.length} no dia</StatusBadge>
               </div>
+
+              {carregando && <div className="small text-secondary py-3">Carregando...</div>}
+              {!carregando && consultasHoje.length === 0 && (
+                <div className="small text-secondary py-3">Nenhuma consulta para hoje.</div>
+              )}
 
               <ListGroup variant="flush">
                 {consultasHoje.map((consulta) => (
                   <ListGroup.Item
-                    key={consulta.horario}
+                    key={consulta.id_consulta}
                     className="d-flex align-items-center gap-3 px-0"
                   >
-                    <strong className="horario-lista">{consulta.horario}</strong>
+                    <strong className="horario-lista">{formatarHora(consulta.horario)}</strong>
                     <div className="flex-grow-1">
                       <strong>{consulta.paciente}</strong>
-                      <div className="small text-secondary">{consulta.procedimento}</div>
+                      <div className="small text-secondary">
+                        {consulta.procedimentos ?? 'Sem procedimento'} · {consulta.profissional}
+                      </div>
                     </div>
-                    <StatusBadge status={consulta.status} />
+                    <StatusBadge status={consulta.status_consulta} />
                   </ListGroup.Item>
                 ))}
               </ListGroup>
@@ -120,13 +227,23 @@ export default function Dashboard() {
           <Card bg="primary" text="white">
             <Card.Body>
               <Card.Title as="h4" className="fs-6 fw-bold">Próxima Consulta</Card.Title>
-              <Card.Text className="small">
-                Paciente: Luciano de Oliveira
-                <br />
-                Data: 12/11/2026
-                <br />
-                Horário: 15:30
-              </Card.Text>
+              {proximaConsulta ? (
+                <Card.Text className="small">
+                  Paciente: {proximaConsulta.paciente}
+                  <br />
+                  Data: {formatarData(proximaConsulta.data)}
+                  <br />
+                  Horário: {formatarHora(proximaConsulta.horario)}
+                  {proximaConsulta.procedimentos && (
+                    <>
+                      <br />
+                      Procedimento: {proximaConsulta.procedimentos}
+                    </>
+                  )}
+                </Card.Text>
+              ) : (
+                <Card.Text className="small">Nenhuma consulta futura agendada.</Card.Text>
+              )}
             </Card.Body>
           </Card>
         </Col>
