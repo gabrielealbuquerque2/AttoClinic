@@ -1,9 +1,7 @@
-
-import express from "express";
 import db from "../database.js";
-import createCrudRouter from "../utils/crud.js";
+import criarCrud from "../utils/crud.js";
 
-const router = createCrudRouter(
+const router = criarCrud(
     "material",
     "id_material",
     [
@@ -25,15 +23,12 @@ const router = createCrudRouter(
     ]
 );
 
-// Buscar materiais com filtro por status
+// filtro status
 router.get("/lista", async (req, res) => {
     try {
         const { status } = req.query;
 
-        // Calcula o status de cada material
-        let sql = `
-            SELECT *
-            FROM (
+        let sql = `SELECT * FROM (
                 SELECT
                     id_material,
                     nome,
@@ -65,12 +60,10 @@ router.get("/lista", async (req, res) => {
                 FROM material
             ) AS materiais
 
-            WHERE 1 = 1
-        `;
+            WHERE 1 = 1 `;
 
         const valores = [];
 
-        // Filtrar por status
         if (status && status !== "Todos os status") {
             sql += " AND status = ?";
             valores.push(status);
@@ -79,7 +72,6 @@ router.get("/lista", async (req, res) => {
         sql += " ORDER BY nome";
 
         const [rows] = await db.execute(sql, valores);
-
         res.json(rows);
 
     } catch (error) {
@@ -91,12 +83,11 @@ router.get("/lista", async (req, res) => {
     }
 });
 
-// Buscar resumo do estoque
+// resumo do estoque
 router.get("/resumo", async (req, res) => {
     try {
-        const [rows] = await db.execute(`
-            SELECT
-                COUNT(*) AS total_materiais,
+        const [rows] = await db.execute(
+            `SELECT COUNT(*) AS total_materiais,
 
                 SUM(
                     CASE
@@ -124,8 +115,7 @@ router.get("/resumo", async (req, res) => {
                     END
                 ) AS esgotados
 
-            FROM material
-        `);
+            FROM material`);
 
         res.json({
             total_materiais: Number(rows[0].total_materiais),

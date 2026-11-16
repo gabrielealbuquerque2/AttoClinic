@@ -1,11 +1,8 @@
-
-import express from "express";
 import db from "../database.js";
-import createCrudRouter from "../utils/crud.js";
+import criarCrud from "../utils/crud.js";
 
-const router = createCrudRouter(
-    "prontuario",
-    "id_prontuario",
+const router = criarCrud(
+    "prontuario", "id_prontuario",
     [
         "id_paciente",
         "data",
@@ -14,7 +11,7 @@ const router = createCrudRouter(
     ]
 );
 
-// Buscar pacientes para a tela de prontuários
+// busca pacientes - nome, email, cpf
 router.get("/pacientes", async (req, res) => {
     try {
         const busca = req.query.busca || "";
@@ -61,7 +58,7 @@ router.get("/pacientes", async (req, res) => {
     }
 });
 
-// Buscar prontuário de um paciente específico
+// busca paciente especifico
 router.get("/paciente/:id", async (req, res) => {
     try {
         const [rows] = await db.execute(

@@ -1,8 +1,7 @@
-import express from "express";
 import db from "../database.js";
-import createCrudRouter from "../utils/crud.js";
+import criarCrud from "../utils/crud.js";
 
-const router = createCrudRouter(
+const router = criarCrud(
     "pagamento",
     "id_pagamento",
     [
@@ -14,11 +13,11 @@ const router = createCrudRouter(
     ]
 );
 
-// Buscar lista de pagamentos com o nome do paciente
+// filtro nome paciente
 router.get("/lista", async (req, res) => {
     try {
-        const [rows] = await db.execute(`
-            SELECT
+        const [rows] = await db.execute(
+            `SELECT
                 pagamento.id_pagamento,
                 pagamento.id_paciente,
                 paciente.nome AS nome_pagador,
@@ -31,8 +30,7 @@ router.get("/lista", async (req, res) => {
             LEFT JOIN paciente
                 ON pagamento.id_paciente = paciente.id_paciente
 
-            ORDER BY pagamento.data_pagamento DESC
-        `);
+            ORDER BY pagamento.data_pagamento DESC `);
 
         res.json(rows);
 

@@ -1,9 +1,7 @@
-
-import express from "express";
 import db from "../database.js";
-import createCrudRouter from "../utils/crud.js";
+import criarCrud from "../utils/crud.js";
 
-const router = createCrudRouter(
+const router = criarCrud(
     "consulta",
     "id_consulta",
     [
@@ -19,7 +17,6 @@ const router = createCrudRouter(
     ["id_paciente", "id_profissional", "data", "horario", "status_consulta"]
 );
 
-// Agendar consulta e associar o procedimento
 router.post("/agendar", async (req, res) => {
     let conexao;
 
@@ -34,7 +31,6 @@ router.post("/agendar", async (req, res) => {
             observacoes
         } = req.body;
 
-        // Verifica os campos obrigatórios
         if (
             !id_paciente ||
             !id_profissional ||
@@ -48,11 +44,8 @@ router.post("/agendar", async (req, res) => {
         }
 
         conexao = await db.getConnection();
-
-        // Inicia a transação
         await conexao.beginTransaction();
 
-        // Cadastra a consulta
         const [resultado] = await conexao.execute(
             `INSERT INTO consulta
             (id_paciente, id_profissional, data, horario, status_consulta, observacoes)
@@ -67,10 +60,8 @@ router.post("/agendar", async (req, res) => {
             ]
         );
 
-        // Pega o ID da consulta que acabou de ser cadastrada
         const idConsulta = resultado.insertId;
 
-        // Associa o procedimento à consulta
         await conexao.execute(
             `INSERT INTO consulta_procedimento
             (id_consulta, id_procedimento)
@@ -78,7 +69,6 @@ router.post("/agendar", async (req, res) => {
             [idConsulta, id_procedimento]
         );
 
-        // Confirma as duas operações
         await conexao.commit();
 
         res.status(201).json({
@@ -87,7 +77,7 @@ router.post("/agendar", async (req, res) => {
         });
 
     } catch (error) {
-        // Desfaz as operações caso ocorra algum erro
+        
         if (conexao) {
             await conexao.rollback();
         }
@@ -105,7 +95,7 @@ router.post("/agendar", async (req, res) => {
     }
 });
 
-// Buscar consultas da agenda
+// busca
 router.get("/agenda", async (req, res) => {
     try {
         const { data, dataInicio, dataFim, id_profissional, status } = req.query;
@@ -142,25 +132,21 @@ router.get("/agenda", async (req, res) => {
 
         const valores = [];
 
-        // Filtrar por uma data específica
         if (data) {
             sql += " AND consulta.data = ?";
             valores.push(data);
         }
 
-        // Filtrar por período
         if (dataInicio && dataFim) {
             sql += " AND consulta.data BETWEEN ? AND ?";
             valores.push(dataInicio, dataFim);
         }
 
-        // Filtrar por profissional
         if (id_profissional) {
             sql += " AND consulta.id_profissional = ?";
             valores.push(id_profissional);
         }
 
-        // Filtrar por status
         if (status) {
             sql += " AND LOWER(consulta.status_consulta) = ?";
             valores.push(status.toLowerCase());

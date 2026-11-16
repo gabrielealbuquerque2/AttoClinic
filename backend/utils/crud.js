@@ -1,8 +1,7 @@
-
 import express from "express";
 import db from "../database.js";
 
-function createCrudRouter(table, idColumn, fields, obrigatorios = []) { // fields = lista das colunas
+function criarCrud(table, idColumn, fields, obrigatorios = []) { // fields = lista das colunas
     const router = express.Router();
 
     // Seleciona apenas os campos permitidos
@@ -127,4 +126,4 @@ function createCrudRouter(table, idColumn, fields, obrigatorios = []) { // field
     return router;
 }
 
-export default createCrudRouter;
+export default criarCrud;

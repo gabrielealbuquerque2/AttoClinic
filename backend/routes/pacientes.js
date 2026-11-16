@@ -1,8 +1,7 @@
-import express from "express";
 import db from "../database.js";
-import createCrudRouter from "../utils/crud.js";
+import criarCrud from "../utils/crud.js";
 
-const router = createCrudRouter(
+const router = criarCrud(
     "paciente",
     "id_paciente",
     [
@@ -20,7 +19,7 @@ const router = createCrudRouter(
     ["nome", "cpf"]
 );
 
-// Buscar pacientes pelo nome
+// filtro nome
 router.get("/buscar/nome", async (req, res) => {
     try {
         const nome = req.query.nome || "";

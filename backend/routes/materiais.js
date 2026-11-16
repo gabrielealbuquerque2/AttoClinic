@@ -1,6 +1,6 @@
-import createCrudRouter from "../utils/crud.js";
+import criarCrud from "../utils/crud.js";
 
-const router = createCrudRouter(
+const router = criarCrud(
     "material",
     "id_material",
     [

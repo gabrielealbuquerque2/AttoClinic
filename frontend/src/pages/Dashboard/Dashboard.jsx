@@ -119,11 +119,14 @@ export default function Dashboard() {
 
           <Card bg="primary" text="white">
             <Card.Body>
-              <Card.Title as="h4" className="fs-6 fw-bold">Lembrete do Sistema</Card.Title>
+              <Card.Title as="h4" className="fs-6 fw-bold">Próxima Consulta</Card.Title>
               <Card.Text className="small">
-                3 pacientes têm consulta de retorno vencida. Verifique a agenda para reagendamento.
+                Paciente: Luciano de Oliveira
+                <br />
+                Data: 12/11/2026
+                <br />
+                Horário: 15:30
               </Card.Text>
-              <Button variant="outline-light" size="sm">Ver detalhes</Button>
             </Card.Body>
           </Card>
         </Col>
