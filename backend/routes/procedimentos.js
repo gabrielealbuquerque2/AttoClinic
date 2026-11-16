@@ -1,8 +1,7 @@
-import createCrudRouter from "../utils/crud.js";
+import criarCrud from "../utils/crud.js";
 
-const router = createCrudRouter(
-    "procedimento",
-    "id_procedimento",
+const router = criarCrud(
+    "procedimento", "id_procedimento",
     [
         "nome_procedimento",
         "valor",

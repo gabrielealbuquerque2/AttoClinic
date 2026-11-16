@@ -1,8 +1,7 @@
-import createCrudRouter from "../utils/crud.js";
+import criarCrud from "../utils/crud.js";
 
-const router = createCrudRouter(
-    "profissional",
-    "id_profissional",
+const router = criarCrud(
+    "profissional", "id_profissional",
     [
         "nome",
         "cpf",

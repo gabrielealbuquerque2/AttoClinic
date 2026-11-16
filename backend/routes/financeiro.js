@@ -1,16 +1,14 @@
-
 import express from "express";
 import db from "../database.js";
 
 const router = express.Router();
 
-// Buscar movimentações financeiras com filtros
+// filtro movimentacao
 router.get("/movimentacoes", async (req, res) => {
     try {
         const { tipo, status, mes } = req.query;
-
-        // Verifica se o tipo informado é válido
         const tiposPermitidos = ["receita", "despesa"];
+        const statusPermitidos = ["pago", "pendente"];
 
         if (tipo && !tiposPermitidos.includes(tipo.toLowerCase())) {
             return res.status(400).json({
@@ -18,19 +16,14 @@ router.get("/movimentacoes", async (req, res) => {
             });
         }
 
-        // Verifica se o status informado é válido
-        const statusPermitidos = ["pago", "pendente"];
-
         if (status && !statusPermitidos.includes(status.toLowerCase())) {
             return res.status(400).json({
                 error: "Status inválido. Use pago ou pendente."
             });
         }
 
-        // Une receitas e despesas em uma única consulta
-        let sql = `
-            SELECT *
-            FROM (
+        // receita e despesa juntos
+        let sql = `SELECT * FROM (
                 SELECT
                     receita.id_receita AS id,
                     receita.data_receita AS data,
@@ -44,7 +37,6 @@ router.get("/movimentacoes", async (req, res) => {
 
                 LEFT JOIN paciente
                     ON receita.id_paciente = paciente.id_paciente
-
                 UNION ALL
 
                 SELECT
@@ -59,29 +51,24 @@ router.get("/movimentacoes", async (req, res) => {
                 FROM despesa
             ) AS movimentacoes
 
-            WHERE 1 = 1
-        `;
+            WHERE 1 = 1`;
 
         const valores = [];
 
-        // Filtrar por tipo
         if (tipo) {
             sql += " AND LOWER(tipo) = ?";
             valores.push(tipo.toLowerCase());
         }
 
-        // Filtrar por status
         if (status) {
             sql += " AND LOWER(status) = ?";
             valores.push(status.toLowerCase());
         }
 
-        // Filtrar por mês
         if (mes) {
-            sql += `
-                AND data >= ?
-                AND data < DATE_ADD(?, INTERVAL 1 MONTH)
-            `;
+            sql += 
+            `AND data >= ?
+            AND data < DATE_ADD(?, INTERVAL 1 MONTH)`;
 
             valores.push(`${mes}-01`, `${mes}-01`);
         }
@@ -89,7 +76,6 @@ router.get("/movimentacoes", async (req, res) => {
         sql += " ORDER BY data DESC";
 
         const [rows] = await db.execute(sql, valores);
-
         res.json(rows);
 
     } catch (error) {
@@ -101,18 +87,11 @@ router.get("/movimentacoes", async (req, res) => {
     }
 });
 
-// Buscar resumo financeiro do mês
+// resumo do mes
 router.get("/resumo", async (req, res) => {
     try {
         const mes = req.query.mes ||
-            new Date().toISOString().slice(0, 7);
-
-        // Verifica se o mês está no formato correto
-        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes)) {
-            return res.status(400).json({
-                error: "Mês inválido. Use o formato AAAA-MM."
-            });
-        }
+            new Date().toISOString().slice(0, 7);  // pega o mesm atual
 
         const [ano, numeroMes] = mes.split("-").map(Number);
 
@@ -124,7 +103,7 @@ router.get("/resumo", async (req, res) => {
         };
 
         const inicioMes = formatarData(
-            new Date(ano, numeroMes - 1, 1)
+            new Date(ano, numeroMes - 1, 1) // -----------------
         );
 
         const inicioProximoMes = formatarData(
@@ -135,43 +114,47 @@ router.get("/resumo", async (req, res) => {
             new Date(ano, numeroMes - 2, 1)
         );
 
-        // Total de receitas do mês
-        const [receitas] = await db.execute(
-            `SELECT COALESCE(SUM(valor), 0) AS total
+        // receita desse mes 
+        const [receitas] = await db.execute( // coalesce substitui o null por zero
+            `SELECT COALESCE(SUM(valor), 0) AS total  
              FROM receita
              WHERE data_receita >= ?
-             AND data_receita < ?`,
+             AND data_receita < ?
+             AND LOWER(status) = 'pago'`,
             [inicioMes, inicioProximoMes]
         );
 
-        // Total de despesas do mês
+        // despesa desse mes
         const [despesas] = await db.execute(
             `SELECT COALESCE(SUM(valor), 0) AS total
              FROM despesa
              WHERE data_despesa >= ?
-             AND data_despesa < ?`,
+             AND data_despesa < ?
+             AND LOWER(status) = 'pago'`,
             [inicioMes, inicioProximoMes]
         );
 
-        // Total de receitas do mês anterior
+        // receita mes passado
         const [receitasAnteriores] = await db.execute(
             `SELECT COALESCE(SUM(valor), 0) AS total
              FROM receita
              WHERE data_receita >= ?
-             AND data_receita < ?`,
+             AND data_receita < ?
+             AND LOWER(status) = 'pago'`,
             [inicioMesAnterior, inicioMes]
         );
 
-        // Total de despesas do mês anterior
+        // despesa mes passado
         const [despesasAnteriores] = await db.execute(
             `SELECT COALESCE(SUM(valor), 0) AS total
              FROM despesa
              WHERE data_despesa >= ?
-             AND data_despesa < ?`,
+             AND data_despesa < ?
+             AND LOWER(status) = 'pago'`,
             [inicioMesAnterior, inicioMes]
         );
 
-        // Pagamentos pendentes de receitas e despesas
+        // pagamento pendente
         const [pendentesReceita] = await db.execute(
             `SELECT
                 COALESCE(SUM(valor), 0) AS total,
@@ -183,6 +166,7 @@ router.get("/resumo", async (req, res) => {
             [inicioMes, inicioProximoMes]
         );
 
+        // despesa pendente
         const [pendentesDespesa] = await db.execute(
             `SELECT
                 COALESCE(SUM(valor), 0) AS total,
@@ -208,7 +192,7 @@ router.get("/resumo", async (req, res) => {
             Number(pendentesReceita[0].quantidade) +
             Number(pendentesDespesa[0].quantidade);
 
-        // Calcula a variação percentual em relação ao mês anterior
+        // variacao percentual em relacao ao mes anterior
         function calcularVariacao(atual, anterior) {
             if (anterior === 0) {
                 return null;
