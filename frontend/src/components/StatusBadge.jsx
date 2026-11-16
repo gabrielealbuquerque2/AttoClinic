@@ -5,6 +5,8 @@ const variantes = {
   Ativo: 'success',
   Inativo: 'warning',
   Concluído: 'success',
+  Realizada: 'success',
+  Realizado: 'success',
   Confirmado: 'success',
   Aguardando: 'warning',
   Agendado: 'primary',
