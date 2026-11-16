@@ -9,9 +9,11 @@ import receitasRoutes from "./routes/receitas.js";
 import despesasRoutes from "./routes/despesas.js";
 import financeiroRoutes from "./routes/financeiro.js";
 import estoqueRoutes from "./routes/estoque.js";
-import movimentacoesEstoqueRoutes from "./routes/movimentacoesEstoque.js";
+import movimentacoesEstoqueRoutes from "./routes/movimentacao.js";
 import pagamentosRoutes from "./routes/pagamentos.js";
 import procedimentosRoutes from "./routes/procedimentos.js";
+import dashboardRoutes from "./routes/dashboard.js";
+import relatoriosRoutes from "./routes/relatorios.js";
 
 const app = express();
 
@@ -34,6 +36,8 @@ app.use("/materiais", estoqueRoutes);
 app.use("/estoque/movimentacoes", movimentacoesEstoqueRoutes);
 app.use("/pagamentos", pagamentosRoutes);
 app.use("/procedimentos", procedimentosRoutes);
+app.use("/dashboard", dashboardRoutes);
+app.use("/relatorios", relatoriosRoutes);
 
 const PORT = 8000;
 
