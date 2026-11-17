@@ -95,6 +95,107 @@ router.post("/agendar", async (req, res) => {
     }
 });
 
+// editar consulta (dados da consulta + procedimento)
+router.put("/atualizar/:id", async (req, res) => {
+    let conexao;
+
+    try {
+        const {
+            id_paciente,
+            id_profissional,
+            data,
+            horario,
+            id_procedimento,
+            status_consulta,
+            observacoes
+        } = req.body;
+
+        if (
+            !id_paciente ||
+            !id_profissional ||
+            !data ||
+            !horario ||
+            !id_procedimento
+        ) {
+            return res.status(400).json({
+                error: "Preencha todos os campos obrigatórios"
+            });
+        }
+
+        conexao = await db.getConnection();
+        await conexao.beginTransaction();
+
+        const [[consultaExistente]] = await conexao.execute(
+            `SELECT id_consulta
+             FROM consulta
+             WHERE id_consulta = ?
+             FOR UPDATE`,
+            [req.params.id]
+        );
+
+        if (!consultaExistente) {
+            await conexao.rollback();
+
+            return res.status(404).json({
+                error: "Consulta não encontrada"
+            });
+        }
+
+        await conexao.execute(
+            `UPDATE consulta
+             SET id_paciente = ?,
+                 id_profissional = ?,
+                 data = ?,
+                 horario = ?,
+                 status_consulta = ?,
+                 observacoes = ?
+             WHERE id_consulta = ?`,
+            [
+                id_paciente,
+                id_profissional,
+                data,
+                horario,
+                status_consulta || "Agendado",
+                observacoes || null,
+                req.params.id
+            ]
+        );
+
+        // troca o procedimento da consulta
+        await conexao.execute(
+            `DELETE FROM consulta_procedimento WHERE id_consulta = ?`,
+            [req.params.id]
+        );
+
+        await conexao.execute(
+            `INSERT INTO consulta_procedimento
+            (id_consulta, id_procedimento)
+            VALUES (?, ?)`,
+            [req.params.id, id_procedimento]
+        );
+
+        await conexao.commit();
+
+        res.json({ message: "Consulta atualizada com sucesso" });
+
+    } catch (error) {
+        if (conexao) {
+            await conexao.rollback();
+        }
+
+        console.error(error);
+
+        res.status(500).json({
+            error: "Erro ao atualizar consulta"
+        });
+
+    } finally {
+        if (conexao) {
+            conexao.release();
+        }
+    }
+});
+
 // busca
 router.get("/agenda", async (req, res) => {
     try {
@@ -112,7 +213,8 @@ router.get("/agenda", async (req, res) => {
                 paciente.nome AS nome_paciente,
                 paciente.telefone AS telefone_paciente,
                 profissional.nome AS nome_profissional,
-                GROUP_CONCAT(procedimento.nome_procedimento) AS procedimentos
+                GROUP_CONCAT(procedimento.nome_procedimento SEPARATOR ', ') AS procedimentos,
+                MIN(procedimento.id_procedimento) AS id_procedimento
             FROM consulta
 
             INNER JOIN paciente

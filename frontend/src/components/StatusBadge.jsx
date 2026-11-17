@@ -10,6 +10,7 @@ const variantes = {
   Confirmado: 'success',
   Aguardando: 'warning',
   Agendado: 'primary',
+  Cancelada: 'danger',
   Cancelado: 'danger',
   Normal: 'success',
   'Estoque Baixo': 'warning',

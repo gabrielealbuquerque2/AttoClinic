@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import { Alert, Button, Col, Form, Modal, Row } from 'react-bootstrap';
 import Campo from '../../components/Campo';
+import { mensagemDeErro } from '../../services/api';
 
 const categorias = [
   'Anestésicos',
@@ -16,13 +17,18 @@ const unidades = ['un', 'cx', 'ser', 'pct', 'ml', 'l', 'par', 'kit'];
 const formularioVazio = {
   nome: '',
   categoria: '',
-  unidade: '',
-  quantidade: '',
-  quantidadeMinima: '',
-  validade: '',
+  unidade_medida: '',
+  qtd_disponivel: '',
+  qtd_minima: '',
+  data_validade: '',
   fornecedor: '',
   observacoes: '',
 };
+
+// Garante que um valor já gravado no banco apareça no select mesmo fora da lista padrão
+function comAtual(lista, atual) {
+  return atual && !lista.includes(atual) ? [...lista, atual] : lista;
+}
 
 export default function NovoMaterial({
   material = null,
@@ -32,63 +38,86 @@ export default function NovoMaterial({
 }) {
   const [formulario, setFormulario] = useState(() => (
     material
-      ? {
-          ...formularioVazio,
-          ...material,
-          quantidade: String(material.quantidade),
-          quantidadeMinima: String(material.quantidadeMinima),
-        }
+      ? Object.fromEntries(
+          Object.keys(formularioVazio).map((campo) => [campo, String(material[campo] ?? '')])
+        )
       : formularioVazio
   ));
   const [erros, setErros] = useState({});
+  const [erroApi, setErroApi] = useState('');
+  const [salvando, setSalvando] = useState(false);
 
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
     setFormulario((atual) => ({ ...atual, [name]: value }));
     setErros((atuais) => ({ ...atuais, [name]: '' }));
+    setErroApi('');
   }
 
-  function salvar(evento) {
+  async function salvar(evento) {
     evento.preventDefault();
     const novosErros = {};
 
-    ['nome', 'categoria', 'unidade', 'quantidade', 'quantidadeMinima'].forEach((campo) => {
+    // Na edição a quantidade não é obrigatória: ela só muda pela Movimentação
+    const obrigatorios = ['nome', 'categoria', 'unidade_medida', 'qtd_minima'];
+    if (!material) obrigatorios.push('qtd_disponivel');
+
+    obrigatorios.forEach((campo) => {
       if (!String(formulario[campo]).trim()) {
         novosErros[campo] = 'Este campo é obrigatório.';
       }
     });
 
-    const quantidade = Number(formulario.quantidade);
-    const quantidadeMinima = Number(formulario.quantidadeMinima);
-    if (formulario.quantidade !== '' && (!Number.isFinite(quantidade) || quantidade < 0)) {
-      novosErros.quantidade = 'Informe um valor igual ou maior que zero.';
-    }
-    if (
-      formulario.quantidadeMinima !== '' &&
-      (!Number.isFinite(quantidadeMinima) || quantidadeMinima < 0)
-    ) {
-      novosErros.quantidadeMinima = 'Informe um valor igual ou maior que zero.';
-    }
+    const camposNumericos = material
+      ? ['qtd_minima']
+      : ['qtd_disponivel', 'qtd_minima'];
+    camposNumericos.forEach((campo) => {
+      const numero = Number(formulario[campo]);
+      if (formulario[campo] !== '' && (!Number.isInteger(numero) || numero < 0)) {
+        novosErros[campo] = 'Informe um número inteiro igual ou maior que zero.';
+      }
+    });
 
     if (Object.keys(novosErros).length) {
       setErros(novosErros);
       return;
     }
 
-    onSave({
-      ...formulario,
-      quantidade,
-      quantidadeMinima,
-      validade: formulario.validade || '',
-    });
+    const dados = {
+      nome: formulario.nome.trim(),
+      categoria: formulario.categoria,
+      unidade_medida: formulario.unidade_medida,
+      qtd_minima: Number(formulario.qtd_minima),
+      data_validade: formulario.data_validade || null,
+      fornecedor: formulario.fornecedor.trim() || null,
+      observacoes: formulario.observacoes.trim() || null,
+    };
+    // Estoque só entra no cadastro; depois disso, é alterado por entradas/saídas
+    if (!material) dados.qtd_disponivel = Number(formulario.qtd_disponivel);
+
+    setSalvando(true);
+    try {
+      await onSave(dados);
+    } catch (e) {
+      setErroApi(mensagemDeErro(e, 'Erro ao salvar material.'));
+      setSalvando(false);
+    }
   }
 
-  function excluir() {
+  async function excluir() {
     if (!material) return;
     const confirmado = window.confirm(
       `Tem certeza que deseja excluir "${material.nome}" do estoque?`
     );
-    if (confirmado) onDelete(material.id);
+    if (!confirmado) return;
+
+    setSalvando(true);
+    try {
+      await onDelete(material.id_material);
+    } catch (e) {
+      setErroApi(mensagemDeErro(e, 'Erro ao excluir material.'));
+      setSalvando(false);
+    }
   }
 
   return (
@@ -106,6 +135,8 @@ export default function NovoMaterial({
         </Modal.Header>
 
         <Modal.Body>
+          {erroApi && <Alert variant="danger" className="py-2">{erroApi}</Alert>}
+
           <Campo
             id="novo-material-nome"
             name="nome"
@@ -130,7 +161,7 @@ export default function NovoMaterial({
                 erro={erros.categoria}
               >
                 <option value="">Selecione...</option>
-                {categorias.map((categoria) => (
+                {comAtual(categorias, formulario.categoria).map((categoria) => (
                   <option key={categoria}>{categoria}</option>
                 ))}
               </Campo>
@@ -138,16 +169,16 @@ export default function NovoMaterial({
             <Col sm={6}>
               <Campo
                 id="novo-material-unidade"
-                name="unidade"
+                name="unidade_medida"
                 label="Unidade"
                 obrigatorio
                 tipo="select"
-                value={formulario.unidade}
+                value={formulario.unidade_medida}
                 onChange={atualizarCampo}
-                erro={erros.unidade}
+                erro={erros.unidade_medida}
               >
                 <option value="">Selecione...</option>
-                {unidades.map((unidade) => (
+                {comAtual(unidades, formulario.unidade_medida).map((unidade) => (
                   <option key={unidade} value={unidade}>{unidade}</option>
                 ))}
               </Campo>
@@ -155,32 +186,34 @@ export default function NovoMaterial({
           </Row>
 
           <Row>
-            <Col sm={6}>
-              <Campo
-                id="novo-material-quantidade"
-                name="quantidade"
-                label="Quantidade Inicial"
-                obrigatorio
-                type="number"
-                min="0"
-                step="any"
-                value={formulario.quantidade}
-                onChange={atualizarCampo}
-                erro={erros.quantidade}
-              />
-            </Col>
+            {!material && (
+              <Col sm={6}>
+                <Campo
+                  id="novo-material-quantidade"
+                  name="qtd_disponivel"
+                  label="Quantidade Inicial"
+                  obrigatorio
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formulario.qtd_disponivel}
+                  onChange={atualizarCampo}
+                  erro={erros.qtd_disponivel}
+                />
+              </Col>
+            )}
             <Col sm={6}>
               <Campo
                 id="novo-material-minimo"
-                name="quantidadeMinima"
+                name="qtd_minima"
                 label="Estoque Mínimo"
                 obrigatorio
                 type="number"
                 min="0"
-                step="any"
-                value={formulario.quantidadeMinima}
+                step="1"
+                value={formulario.qtd_minima}
                 onChange={atualizarCampo}
-                erro={erros.quantidadeMinima}
+                erro={erros.qtd_minima}
               />
             </Col>
           </Row>
@@ -189,10 +222,10 @@ export default function NovoMaterial({
             <Col sm={6}>
               <Campo
                 id="novo-material-validade"
-                name="validade"
+                name="data_validade"
                 label="Data de Validade"
                 type="date"
-                value={formulario.validade}
+                value={formulario.data_validade}
                 onChange={atualizarCampo}
               />
             </Col>
@@ -223,12 +256,14 @@ export default function NovoMaterial({
 
         <Modal.Footer>
           {material && (
-            <Button variant="outline-danger" className="me-auto" onClick={excluir}>
+            <Button variant="outline-danger" className="me-auto" onClick={excluir} disabled={salvando}>
               Excluir Material
             </Button>
           )}
           <Button variant="outline-secondary" onClick={onClose}>Cancelar</Button>
-          <Button type="submit">{material ? 'Salvar Alterações' : 'Cadastrar Material'}</Button>
+          <Button type="submit" disabled={salvando}>
+            {salvando ? 'Salvando...' : material ? 'Salvar Alterações' : 'Cadastrar Material'}
+          </Button>
         </Modal.Footer>
       </Form>
     </Modal>

@@ -1,63 +1,70 @@
 import { useState } from 'react';
 import { Alert, Button, Col, Form, Modal, Row } from 'react-bootstrap';
 import Campo from '../../components/Campo';
-
-const pacientesCadastrados = [
-  'Maria Clara Oliveira Santos',
-  'Pedro Henrique Souza',
-  'Ana Paula Costa Lima',
-  'João Carlos Ferreira',
-  'Fernanda Rocha Alves',
-];
-
-const dentistas = ['Dr. Lucas de Oliveira'];
-const procedimentos = [
-  'Limpeza',
-  'Avaliação',
-  'Restauração',
-  'Extração',
-  'Consulta de rotina',
-  'Retorno',
-  'Clareamento',
-];
+import { mensagemDeErro } from '../../services/api';
 
 const valoresIniciais = {
   paciente: '',
-  profissional: '',
+  id_profissional: '',
   data: '',
   horario: '',
-  procedimento: '',
-  status: 'Agendado',
+  id_procedimento: '',
+  status_consulta: 'Agendado',
   observacoes: '',
 };
 
 const camposObrigatorios = {
-  paciente: 'Informe o nome do paciente.',
-  profissional: 'Selecione o dentista responsável.',
+  paciente: 'Selecione um paciente cadastrado.',
+  id_profissional: 'Selecione o dentista responsável.',
   data: 'Informe a data da consulta.',
   horario: 'Informe o horário da consulta.',
-  procedimento: 'Selecione o procedimento.',
+  id_procedimento: 'Selecione o procedimento.',
 };
 
-export default function NovaConsulta({ dataInicial, onClose, onSave }) {
+export default function NovaConsulta({
+  dataInicial,
+  consulta,
+  pacientes = [],
+  profissionais = [],
+  procedimentos = [],
+  onClose,
+  onSave,
+}) {
   const [formulario, setFormulario] = useState({
     ...valoresIniciais,
-    data: dataInicial,
+    paciente: consulta?.nome_paciente || '',
+    id_profissional: consulta?.id_profissional?.toString() || '',
+    data: consulta?.data?.slice(0, 10) || dataInicial,
+    horario: consulta?.horario?.slice(0, 5) || '',
+    id_procedimento: consulta?.id_procedimento?.toString() || '',
+    status_consulta: consulta?.status_consulta || valoresIniciais.status_consulta,
+    observacoes: consulta?.observacoes || '',
   });
   const [erros, setErros] = useState({});
+  const [erroEnvio, setErroEnvio] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const emEdicao = Boolean(consulta);
 
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
     setFormulario((atual) => ({ ...atual, [name]: value }));
     setErros((atuais) => ({ ...atuais, [name]: '' }));
+    setErroEnvio('');
   }
 
-  function enviarFormulario(evento) {
+  async function enviarFormulario(evento) {
     evento.preventDefault();
 
+    const pacienteSelecionado = pacientes.find(
+      (paciente) => paciente.nome === formulario.paciente
+    );
     const novosErros = Object.fromEntries(
       Object.entries(camposObrigatorios)
-        .filter(([campo]) => !formulario[campo].trim())
+        .filter(([campo]) =>
+          campo === 'paciente'
+            ? !pacienteSelecionado
+            : !formulario[campo].trim()
+        )
         .map(([campo, mensagem]) => [campo, mensagem])
     );
 
@@ -66,7 +73,23 @@ export default function NovaConsulta({ dataInicial, onClose, onSave }) {
       return;
     }
 
-    onSave(formulario);
+    setSalvando(true);
+    setErroEnvio('');
+    try {
+      await onSave({
+        id_paciente: pacienteSelecionado.id_paciente,
+        id_profissional: formulario.id_profissional,
+        id_procedimento: formulario.id_procedimento,
+        data: formulario.data,
+        horario: formulario.horario,
+        status_consulta: formulario.status_consulta,
+        observacoes: formulario.observacoes,
+      });
+    } catch (erro) {
+      setErroEnvio(mensagemDeErro(erro));
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
@@ -74,15 +97,22 @@ export default function NovaConsulta({ dataInicial, onClose, onSave }) {
       <Form onSubmit={enviarFormulario} noValidate>
         <Modal.Header closeButton>
           <div>
-            <Modal.Title as="h2" className="fs-5 fw-bold">Nova Consulta</Modal.Title>
-            <small className="text-secondary">Preencha os dados para agendar</small>
+            <Modal.Title as="h2" className="fs-5 fw-bold">
+              {emEdicao ? 'Editar Consulta' : 'Nova Consulta'}
+            </Modal.Title>
+            <small className="text-secondary">
+              {emEdicao ? 'Atualize os dados da consulta' : 'Preencha os dados para agendar'}
+            </small>
           </div>
         </Modal.Header>
 
         <Modal.Body>
+          {erroEnvio && (
+            <Alert variant="danger" className="py-2">{erroEnvio}</Alert>
+          )}
           {Object.values(erros).some(Boolean) && (
             <Alert variant="danger" className="py-2">
-              Confira os campos obrigatórios antes de agendar.
+              Confira os campos obrigatórios antes de {emEdicao ? 'salvar' : 'agendar'}.
             </Alert>
           )}
 
@@ -98,24 +128,29 @@ export default function NovaConsulta({ dataInicial, onClose, onSave }) {
             erro={erros.paciente}
           />
           <datalist id="nova-consulta-pacientes">
-            {pacientesCadastrados.map((paciente) => (
-              <option key={paciente} value={paciente} />
+            {pacientes.map((paciente) => (
+              <option key={paciente.id_paciente} value={paciente.nome} />
             ))}
           </datalist>
 
           <Campo
             id="consulta-profissional"
-            name="profissional"
+            name="id_profissional"
             label="Dentista Responsável"
             obrigatorio
             tipo="select"
-            value={formulario.profissional}
+            value={formulario.id_profissional}
             onChange={atualizarCampo}
-            erro={erros.profissional}
+            erro={erros.id_profissional}
           >
             <option value="">Selecionar dentista...</option>
-            {dentistas.map((dentista) => (
-              <option key={dentista} value={dentista}>{dentista}</option>
+            {profissionais.map((profissional) => (
+              <option
+                key={profissional.id_profissional}
+                value={profissional.id_profissional}
+              >
+                {profissional.nome}
+              </option>
             ))}
           </Campo>
 
@@ -148,31 +183,38 @@ export default function NovaConsulta({ dataInicial, onClose, onSave }) {
 
           <Campo
             id="consulta-procedimento"
-            name="procedimento"
+            name="id_procedimento"
             label="Procedimento"
             obrigatorio
             tipo="select"
-            value={formulario.procedimento}
+            value={formulario.id_procedimento}
             onChange={atualizarCampo}
-            erro={erros.procedimento}
+            erro={erros.id_procedimento}
           >
             <option value="">Selecionar procedimento...</option>
             {procedimentos.map((procedimento) => (
-              <option key={procedimento} value={procedimento}>{procedimento}</option>
+              <option
+                key={procedimento.id_procedimento}
+                value={procedimento.id_procedimento}
+              >
+                {procedimento.nome_procedimento}
+              </option>
             ))}
           </Campo>
 
           <Campo
             id="consulta-status"
-            name="status"
+            name="status_consulta"
             label="Status"
             tipo="select"
-            value={formulario.status}
+            value={formulario.status_consulta}
             onChange={atualizarCampo}
           >
             <option>Agendado</option>
             <option>Confirmado</option>
             <option>Aguardando</option>
+            <option>Realizada</option>
+            <option>Cancelada</option>
             <option>Cancelado</option>
           </Campo>
 
@@ -190,8 +232,12 @@ export default function NovaConsulta({ dataInicial, onClose, onSave }) {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={onClose}>Cancelar</Button>
-          <Button type="submit">Agendar Consulta</Button>
+          <Button variant="outline-secondary" onClick={onClose} disabled={salvando}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={salvando}>
+            {salvando ? 'Salvando...' : emEdicao ? 'Salvar Alterações' : 'Agendar Consulta'}
+          </Button>
         </Modal.Footer>
       </Form>
     </Modal>

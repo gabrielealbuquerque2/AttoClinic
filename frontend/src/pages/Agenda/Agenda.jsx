@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Alert, Button, ButtonGroup, Card, Form, ToggleButton, ToggleButtonGroup,
+  Alert, Button, ButtonGroup, Card, ToggleButton, ToggleButtonGroup,
 } from 'react-bootstrap';
 import NovaConsulta from './NovaConsulta';
 import AppLayout from '../../components/AppLayout';
+import Campo from '../../components/Campo';
 import PageHeader from '../../components/PageHeader';
 import StatusBadge, { varianteDe } from '../../components/StatusBadge';
+import api, { mensagemDeErro } from '../../services/api';
+import { dataParaISO, formatarHora, hojeISO } from '../../utils/formatar';
 
 const horariosPadrao = [
   '07:00', '08:00', '09:00', '10:00', '11:00',
@@ -16,35 +20,76 @@ const resumoStatus = [
   ['Confirmado', 'Confirmadas'],
   ['Aguardando', 'Aguardando'],
   ['Agendado', 'Agendadas'],
+  ['Realizada', 'Realizadas'],
   ['Cancelado', 'Canceladas'],
 ];
 
-function paraTextoData(data) {
-  const ano = data.getFullYear();
-  const mes = String(data.getMonth() + 1).padStart(2, '0');
-  const dia = String(data.getDate()).padStart(2, '0');
-  return `${ano}-${mes}-${dia}`;
-}
+const normalizarStatus = (status) => {
+  const valor = String(status).toLowerCase();
+  return valor === 'cancelada' ? 'cancelado' : valor;
+};
+const mesmoStatus = (a, b) => normalizarStatus(a) === normalizarStatus(b);
 
 function Agenda() {
-  const [dataSelecionada, setDataSelecionada] = useState('2025-08-28');
+  const navigate = useNavigate();
+  const [dataSelecionada, setDataSelecionada] = useState(hojeISO());
   const [visualizacao, setVisualizacao] = useState('Dia');
   const [filtroStatus, setFiltroStatus] = useState('Todos os status');
+  const [consultas, setConsultas] = useState([]);
+  const [pacientes, setPacientes] = useState([]);
+  const [profissionais, setProfissionais] = useState([]);
+  const [procedimentos, setProcedimentos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
+  const [consultaEditando, setConsultaEditando] = useState(null);
   const [mensagemSucesso, setMensagemSucesso] = useState('');
+  const ultimaRequisicao = useRef(0);
 
-  const [consultas, setConsultas] = useState([
-    { id: 1, data: '2025-08-28', horario: '08:00', paciente: 'Ana Costa Lima', profissional: 'Dr. Lucas de Oliveira', procedimento: 'Limpeza', status: 'Confirmado' },
-    { id: 2, data: '2025-08-28', horario: '09:00', paciente: 'Pedro Henrique Souza', profissional: 'Dr. Lucas de Oliveira', procedimento: 'Avaliação', status: 'Confirmado' },
-    { id: 3, data: '2025-08-28', horario: '10:30', paciente: 'Maria Clara Oliveira', profissional: 'Dr. Lucas de Oliveira', procedimento: 'Restauração', status: 'Aguardando' },
-    { id: 4, data: '2025-08-28', horario: '11:00', paciente: 'João Carlos Ferreira', profissional: 'Dr. Lucas de Oliveira', procedimento: 'Extração', status: 'Confirmado' },
-    { id: 5, data: '2025-08-28', horario: '14:00', paciente: 'Beatriz Almeida', profissional: 'Dr. Lucas de Oliveira', procedimento: 'Consulta de rotina', status: 'Aguardando' },
-    { id: 6, data: '2025-08-28', horario: '15:30', paciente: 'Rafael Martins', profissional: 'Dr. Lucas de Oliveira', procedimento: 'Retorno', status: 'Agendado' },
-  ]);
+  const carregar = useCallback(async () => {
+    // se a data mudar rápido, ignora respostas antigas
+    const numero = ++ultimaRequisicao.current;
+    try {
+      const { data } = await api.get('/consultas/agenda', { params: { data: dataSelecionada } });
+      if (numero !== ultimaRequisicao.current) return;
+      setConsultas(data);
+      setErro('');
+    } catch (e) {
+      if (numero !== ultimaRequisicao.current) return;
+      setErro(mensagemDeErro(e, 'Erro ao carregar a agenda.'));
+    } finally {
+      if (numero === ultimaRequisicao.current) setCarregando(false);
+    }
+  }, [dataSelecionada]);
 
-  const consultasDoDia = consultas.filter((consulta) => consulta.data === dataSelecionada);
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  // Listas usadas no formulário da consulta
+  useEffect(() => {
+    async function carregarCadastros() {
+      try {
+        const [listaPacientes, listaProfissionais, listaProcedimentos] = await Promise.all([
+          api.get('/pacientes/buscar'),
+          api.get('/profissionais/buscar'),
+          api.get('/procedimentos/buscar'),
+        ]);
+        setPacientes(listaPacientes.data);
+        setProfissionais(listaProfissionais.data);
+        setProcedimentos(listaProcedimentos.data);
+      } catch (e) {
+        setErro(mensagemDeErro(e, 'Erro ao carregar pacientes, profissionais e procedimentos.'));
+      }
+    }
+    carregarCadastros();
+  }, []);
+
+  // O back já filtra pela data selecionada
+  const consultasDoDia = consultas;
   const consultasFiltradas = consultasDoDia.filter(
-    (consulta) => filtroStatus === 'Todos os status' || consulta.status === filtroStatus
+    (consulta) =>
+      filtroStatus === 'Todos os status' || mesmoStatus(consulta.status_consulta, filtroStatus)
   );
   const horariosTimeline = [...new Set([
     ...horariosPadrao,
@@ -60,22 +105,54 @@ function Agenda() {
   function mudarData(dias) {
     const data = new Date(`${dataSelecionada}T12:00:00`);
     data.setDate(data.getDate() + dias);
-    setDataSelecionada(paraTextoData(data));
+    setDataSelecionada(dataParaISO(data));
   }
 
   function irParaHoje() {
-    setDataSelecionada(paraTextoData(new Date()));
+    setDataSelecionada(hojeISO());
   }
 
   function novaConsulta() {
     setMensagemSucesso('');
+    setConsultaEditando(null);
     setModalAberto(true);
   }
 
-  function cadastrarConsulta(dados) {
-    setConsultas((atuais) => [...atuais, { ...dados, id: Date.now() }]);
+  function editarConsulta(consulta) {
+    setMensagemSucesso('');
+    const nomeProcedimento = String(consulta.procedimentos || '').split(',')[0].trim();
+    const procedimento = procedimentos.find(
+      (item) => item.nome_procedimento === nomeProcedimento
+    );
+    setConsultaEditando({
+      ...consulta,
+      id_procedimento: consulta.id_procedimento ?? procedimento?.id_procedimento,
+    });
+    setModalAberto(true);
+  }
+
+  function fecharModal() {
     setModalAberto(false);
-    setMensagemSucesso('Consulta cadastrada temporariamente nesta sessão.');
+    setConsultaEditando(null);
+  }
+
+  // O modal captura o erro lançado aqui e mostra a mensagem dentro dele.
+  async function salvarConsulta(dados) {
+    if (consultaEditando) {
+      await api.put(`/consultas/atualizar/${consultaEditando.id_consulta}`, dados);
+      setMensagemSucesso('Consulta atualizada com sucesso.');
+    } else {
+      await api.post('/consultas/agendar', dados);
+      setMensagemSucesso('Consulta agendada com sucesso.');
+    }
+
+    fecharModal();
+    // se a consulta caiu em outro dia, vai para esse dia para ela não "sumir"
+    if (dados.data !== dataSelecionada) {
+      setDataSelecionada(dados.data);
+    } else {
+      await carregar();
+    }
   }
 
   return (
@@ -83,6 +160,8 @@ function Agenda() {
       <PageHeader titulo="Agenda" subtitulo={`${consultasDoDia.length} consultas nesta data`}>
         <Button onClick={novaConsulta}>+ Nova Consulta</Button>
       </PageHeader>
+
+      {erro && <Alert variant="danger">{erro}</Alert>}
 
       {mensagemSucesso && (
         <Alert
@@ -133,9 +212,13 @@ function Agenda() {
             <Button variant="outline-primary" size="sm" onClick={irParaHoje}>Hoje</Button>
           </div>
 
-          <Form.Select
+          <Campo
+            id="agenda-filtro-status"
+            label="Filtrar por status"
+            labelClassName="visually-hidden"
+            tipo="select"
+            className="w-auto mb-0"
             size="sm"
-            className="w-auto"
             aria-label="Filtrar por status"
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value)}
@@ -144,15 +227,19 @@ function Agenda() {
             <option value="Confirmado">Confirmadas</option>
             <option value="Aguardando">Aguardando</option>
             <option value="Agendado">Agendadas</option>
+            <option value="Realizada">Realizadas</option>
             <option value="Cancelado">Canceladas</option>
-          </Form.Select>
+          </Campo>
         </Card.Body>
       </Card>
 
       <div className="d-flex flex-wrap gap-2 mb-3">
         {resumoStatus.map(([status, rotulo]) => (
           <StatusBadge key={status} status={status} className="fs-6 fw-normal px-3 py-2">
-            <strong>{consultasDoDia.filter((c) => c.status === status).length}</strong> {rotulo}
+            <strong>
+              {consultasDoDia.filter((c) => mesmoStatus(c.status_consulta, status)).length}
+            </strong>{' '}
+            {rotulo}
           </StatusBadge>
         ))}
       </div>
@@ -171,7 +258,9 @@ function Agenda() {
             </Alert>
           )}
 
-          {consultasFiltradas.length === 0 ? (
+          {carregando ? (
+            <p className="text-center text-secondary my-4">Carregando...</p>
+          ) : consultasFiltradas.length === 0 ? (
             <p className="text-center text-secondary my-4">
               Nenhuma consulta encontrada para esses filtros.
             </p>
@@ -188,35 +277,37 @@ function Agenda() {
                   <div className="flex-grow-1 min-w-0">
                     {consultasDoHorario.map((consulta) => (
                       <Card
-                        key={consulta.id}
+                        key={consulta.id_consulta}
                         className="agenda-consulta mb-2"
-                        style={{ '--faixa': `var(--bs-${varianteDe(consulta.status)})` }}
+                        style={{ '--faixa': `var(--bs-${varianteDe(consulta.status_consulta)})` }}
                       >
                         <Card.Body className="d-flex flex-wrap align-items-center gap-3 py-2">
-                          <strong className="horario-lista">{consulta.horario}</strong>
+                          <strong className="horario-lista">{formatarHora(consulta.horario)}</strong>
 
                           <div className="flex-grow-1">
-                            <h3 className="fs-6 fw-bold mb-0">{consulta.paciente}</h3>
-                            <div className="small">{consulta.procedimento}</div>
-                            <div className="small text-secondary">{consulta.profissional}</div>
+                            <h3 className="fs-6 fw-bold mb-0">{consulta.nome_paciente}</h3>
+                            <div className="small">{consulta.procedimentos || '—'}</div>
+                            <div className="small text-secondary">{consulta.nome_profissional}</div>
                             {consulta.observacoes && (
                               <div className="small text-secondary">{consulta.observacoes}</div>
                             )}
                           </div>
 
                           <div className="d-flex flex-wrap align-items-center gap-2">
-                            <StatusBadge status={consulta.status} />
+                            <StatusBadge status={consulta.status_consulta} />
                             <Button
                               variant="outline-primary"
                               size="sm"
-                              onClick={() => alert(`Prontuário de ${consulta.paciente}`)}
+                              onClick={() =>
+                                navigate('/prontuario', { state: { idPaciente: consulta.id_paciente } })
+                              }
                             >
                               Prontuário
                             </Button>
                             <Button
                               variant="outline-secondary"
                               size="sm"
-                              onClick={() => alert(`Editar consulta de ${consulta.paciente}`)}
+                              onClick={() => editarConsulta(consulta)}
                             >
                               Editar
                             </Button>
@@ -235,8 +326,12 @@ function Agenda() {
       {modalAberto && (
         <NovaConsulta
           dataInicial={dataSelecionada}
-          onClose={() => setModalAberto(false)}
-          onSave={cadastrarConsulta}
+          consulta={consultaEditando}
+          pacientes={pacientes}
+          profissionais={profissionais}
+          procedimentos={procedimentos}
+          onClose={fecharModal}
+          onSave={salvarConsulta}
         />
       )}
     </AppLayout>

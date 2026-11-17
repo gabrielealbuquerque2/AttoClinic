@@ -3,6 +3,7 @@ import { Form } from 'react-bootstrap';
 export default function Campo({
   id,
   label,
+  labelClassName = 'small fw-semibold mb-1',
   obrigatorio = false,
   erro = '',
   tipo = 'input',
@@ -12,27 +13,22 @@ export default function Campo({
   placeholder = '',
   value,
   onChange,
-  rows = 3
+  rows = 3,
+  ...resto
 }) {
-
   return (
     <Form.Group controlId={id} className={className}>
-
-      {/* Label */}
-      <Form.Label className="small fw-semibold mb-1">
+      <Form.Label className={labelClassName}>
         {label}
-
-        {obrigatorio && (
-          <span className="text-danger"> *</span>
-        )}
+        {obrigatorio && <span className="text-danger"> *</span>}
       </Form.Label>
 
-      {/* Select ou campo de texto */}
       {tipo === 'select' ? (
         <Form.Select
           value={value}
           onChange={onChange}
           isInvalid={Boolean(erro)}
+          {...resto}
         >
           {children}
         </Form.Select>
@@ -45,10 +41,10 @@ export default function Campo({
           value={value}
           onChange={onChange}
           isInvalid={Boolean(erro)}
+          {...resto}
         />
       )}
 
-      {/* Mensagem de erro */}
       {erro && (
         <Form.Control.Feedback type="invalid">
           {erro}
