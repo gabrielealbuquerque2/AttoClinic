@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Alert, Button, ButtonGroup, Card, ToggleButton, ToggleButtonGroup,
+  Alert, Button, Card, ToggleButton, ToggleButtonGroup,
 } from 'react-bootstrap';
 import NovaConsulta from './NovaConsulta';
 import AppLayout from '../../components/AppLayout';
@@ -9,7 +9,7 @@ import Campo from '../../components/Campo';
 import PageHeader from '../../components/PageHeader';
 import StatusBadge, { varianteDe } from '../../components/StatusBadge';
 import api, { mensagemDeErro } from '../../services/api';
-import { dataParaISO, formatarHora, hojeISO } from '../../utils/formatar';
+import { dataParaISO, formatarData, formatarHora, hojeISO } from '../../utils/formatar';
 
 const horariosPadrao = [
   '07:00', '08:00', '09:00', '10:00', '11:00',
@@ -29,6 +29,27 @@ const normalizarStatus = (status) => {
   return valor === 'cancelada' ? 'cancelado' : valor;
 };
 const mesmoStatus = (a, b) => normalizarStatus(a) === normalizarStatus(b);
+
+function intervaloDaAgenda(data, visualizacao) {
+  const selecionada = new Date(`${data}T12:00:00`);
+  let inicio = selecionada;
+  let fim = selecionada;
+
+  if (visualizacao === 'Semana') {
+    inicio = new Date(selecionada);
+    inicio.setDate(inicio.getDate() - ((inicio.getDay() + 6) % 7));
+    fim = new Date(inicio);
+    fim.setDate(fim.getDate() + 6);
+  } else if (visualizacao === 'Mês') {
+    inicio = new Date(selecionada.getFullYear(), selecionada.getMonth(), 1, 12);
+    fim = new Date(selecionada.getFullYear(), selecionada.getMonth() + 1, 0, 12);
+  }
+
+  return {
+    dataInicio: dataParaISO(inicio),
+    dataFim: dataParaISO(fim),
+  };
+}
 
 function Agenda() {
   const navigate = useNavigate();
@@ -50,7 +71,10 @@ function Agenda() {
     // se a data mudar rápido, ignora respostas antigas
     const numero = ++ultimaRequisicao.current;
     try {
-      const { data } = await api.get('/consultas/agenda', { params: { data: dataSelecionada } });
+      const params = visualizacao === 'Dia'
+        ? { data: dataSelecionada }
+        : intervaloDaAgenda(dataSelecionada, visualizacao);
+      const { data } = await api.get('/consultas/agenda', { params });
       if (numero !== ultimaRequisicao.current) return;
       setConsultas(data);
       setErro('');
@@ -60,7 +84,7 @@ function Agenda() {
     } finally {
       if (numero === ultimaRequisicao.current) setCarregando(false);
     }
-  }, [dataSelecionada]);
+  }, [dataSelecionada, visualizacao]);
 
   useEffect(() => {
     carregar();
@@ -85,9 +109,7 @@ function Agenda() {
     carregarCadastros();
   }, []);
 
-  // O back já filtra pela data selecionada
-  const consultasDoDia = consultas;
-  const consultasFiltradas = consultasDoDia.filter(
+  const consultasFiltradas = consultas.filter(
     (consulta) =>
       filtroStatus === 'Todos os status' || mesmoStatus(consulta.status_consulta, filtroStatus)
   );
@@ -102,11 +124,23 @@ function Agenda() {
     year: 'numeric',
   });
 
-  function mudarData(dias) {
-    const data = new Date(`${dataSelecionada}T12:00:00`);
-    data.setDate(data.getDate() + dias);
-    setDataSelecionada(dataParaISO(data));
-  }
+  const periodo = intervaloDaAgenda(dataSelecionada, visualizacao);
+  const rotuloPeriodo = visualizacao === 'Dia'
+    ? dataFormatada
+    : visualizacao === 'Semana'
+      ? `${formatarData(periodo.dataInicio)} a ${formatarData(periodo.dataFim)}`
+      : new Date(`${dataSelecionada}T12:00:00`).toLocaleDateString('pt-BR', {
+        month: 'long',
+        year: 'numeric',
+      });
+  const consultasAgrupadas = Object.entries(
+    consultasFiltradas.reduce((grupos, consulta) => {
+      const data = String(consulta.data).slice(0, 10);
+      if (!grupos[data]) grupos[data] = [];
+      grupos[data].push(consulta);
+      return grupos;
+    }, {}),
+  ).sort(([dataA], [dataB]) => dataA.localeCompare(dataB));
 
   function irParaHoje() {
     setDataSelecionada(hojeISO());
@@ -157,7 +191,12 @@ function Agenda() {
 
   return (
     <AppLayout>
-      <PageHeader titulo="Agenda" subtitulo={`${consultasDoDia.length} consultas nesta data`}>
+      <PageHeader
+        titulo="Agenda"
+        subtitulo={`${consultas.length} consulta${consultas.length === 1 ? '' : 's'} ${
+          visualizacao === 'Dia' ? 'neste dia' : visualizacao === 'Semana' ? 'nesta semana' : 'neste mês'
+        }`}
+      >
         <Button onClick={novaConsulta}>+ Nova Consulta</Button>
       </PageHeader>
 
@@ -197,17 +236,19 @@ function Agenda() {
               ))}
             </ToggleButtonGroup>
 
-            <ButtonGroup size="sm">
-              <Button variant="outline-secondary" onClick={() => mudarData(-1)} aria-label="Data anterior">
-                ‹
-              </Button>
-              <Button variant="outline-secondary" disabled className="agenda-data text-body">
-                {dataFormatada}
-              </Button>
-              <Button variant="outline-secondary" onClick={() => mudarData(1)} aria-label="Próxima data">
-                ›
-              </Button>
-            </ButtonGroup>
+            <Campo
+              id="agenda-data"
+              label="Selecionar data"
+              labelClassName="visually-hidden"
+              type="date"
+              size="sm"
+              className="w-auto mb-0"
+              value={dataSelecionada}
+              onChange={(e) => {
+                if (e.target.value) setDataSelecionada(e.target.value);
+              }}
+            />
+            <span className="small text-secondary text-capitalize">{rotuloPeriodo}</span>
 
             <Button variant="outline-primary" size="sm" onClick={irParaHoje}>Hoje</Button>
           </div>
@@ -237,7 +278,7 @@ function Agenda() {
         {resumoStatus.map(([status, rotulo]) => (
           <StatusBadge key={status} status={status} className="fs-6 fw-normal px-3 py-2">
             <strong>
-              {consultasDoDia.filter((c) => mesmoStatus(c.status_consulta, status)).length}
+              {consultas.filter((c) => mesmoStatus(c.status_consulta, status)).length}
             </strong>{' '}
             {rotulo}
           </StatusBadge>
@@ -248,13 +289,13 @@ function Agenda() {
         <Card.Body>
           {visualizacao === 'Semana' && (
             <Alert variant="info" className="py-2">
-              Visualização semanal — selecione uma data pelas setas.
+              Exibindo todas as consultas da semana indicada pela data selecionada.
             </Alert>
           )}
 
           {visualizacao === 'Mês' && (
             <Alert variant="info" className="py-2">
-              Visualização mensal — as consultas da data selecionada são exibidas abaixo.
+              Exibindo todas as consultas do mês indicado pela data selecionada.
             </Alert>
           )}
 
@@ -264,7 +305,7 @@ function Agenda() {
             <p className="text-center text-secondary my-4">
               Nenhuma consulta encontrada para esses filtros.
             </p>
-          ) : (
+          ) : visualizacao === 'Dia' ? (
             horariosTimeline.map((horario) => {
               const consultasDoHorario = consultasFiltradas.filter((consulta) =>
                 consulta.horario.startsWith(horario.slice(0, 2) + ':')
@@ -319,6 +360,60 @@ function Agenda() {
                 </div>
               );
             })
+          ) : (
+            <div className="d-flex flex-column gap-4">
+              {consultasAgrupadas.map(([data, consultasDoDia]) => (
+                <section key={data}>
+                  <h3 className="fs-6 fw-bold text-capitalize mb-2">
+                    {new Date(`${data}T12:00:00`).toLocaleDateString('pt-BR', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                    })}
+                  </h3>
+                  <div className="d-flex flex-column gap-2">
+                    {consultasDoDia.map((consulta) => (
+                      <Card
+                        key={consulta.id_consulta}
+                        className="agenda-consulta"
+                        style={{ '--faixa': `var(--bs-${varianteDe(consulta.status_consulta)})` }}
+                      >
+                        <Card.Body className="d-flex flex-wrap align-items-center gap-3 py-2">
+                          <strong className="horario-lista">{formatarHora(consulta.horario)}</strong>
+                          <div className="flex-grow-1">
+                            <h4 className="fs-6 fw-bold mb-0">{consulta.nome_paciente}</h4>
+                            <div className="small">{consulta.procedimentos || '—'}</div>
+                            <div className="small text-secondary">{consulta.nome_profissional}</div>
+                            {consulta.observacoes && (
+                              <div className="small text-secondary">{consulta.observacoes}</div>
+                            )}
+                          </div>
+                          <div className="d-flex flex-wrap align-items-center gap-2">
+                            <StatusBadge status={consulta.status_consulta} />
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              onClick={() =>
+                                navigate('/prontuario', { state: { idPaciente: consulta.id_paciente } })
+                              }
+                            >
+                              Prontuário
+                            </Button>
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => editarConsulta(consulta)}
+                            >
+                              Editar
+                            </Button>
+                          </div>
+                        </Card.Body>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
           )}
         </Card.Body>
       </Card>
