@@ -4,6 +4,7 @@ import {
 } from 'react-bootstrap';
 import Campo from '../../components/Campo';
 import StatusBadge from '../../components/StatusBadge';
+import { mensagemDeErro } from '../../services/api';
 
 function dataHoje() {
   const hoje = new Date();
@@ -34,6 +35,7 @@ export default function Movimentacao({
     observacao: '',
   });
   const [erro, setErro] = useState('');
+  const [salvando, setSalvando] = useState(false);
 
   function atualizarCampo(evento) {
     const { name, value } = evento.target;
@@ -41,7 +43,7 @@ export default function Movimentacao({
     setErro('');
   }
 
-  function registrar(evento) {
+  async function registrar(evento) {
     evento.preventDefault();
     const quantidade = Number(formulario.quantidade);
     const material = materiais.find(
@@ -56,8 +58,8 @@ export default function Movimentacao({
       setErro('Selecione entrada ou saída.');
       return;
     }
-    if (!Number.isFinite(quantidade) || quantidade <= 0) {
-      setErro('Informe uma quantidade maior que zero.');
+    if (!Number.isInteger(quantidade) || quantidade <= 0) {
+      setErro('Informe uma quantidade inteira maior que zero.');
       return;
     }
     if (!formulario.motivo.trim()) {
@@ -69,15 +71,22 @@ export default function Movimentacao({
       return;
     }
 
-    onRegister({
-      materialId: material.id,
-      material: material.nome,
-      tipo: formulario.tipo,
-      quantidade,
-      data: formulario.data || dataHoje(),
-      motivo: formulario.motivo.trim(),
-      observacao: formulario.observacao.trim(),
-    });
+    setSalvando(true);
+    try {
+      await onRegister({
+        materialId: material.id,
+        material: material.nome,
+        tipo: formulario.tipo,
+        quantidade,
+        data: formulario.data || dataHoje(),
+        motivo: formulario.motivo.trim(),
+        observacao: formulario.observacao.trim(),
+      });
+    } catch (e) {
+      setErro(mensagemDeErro(e, 'Erro ao registrar movimentação.'));
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
@@ -122,10 +131,10 @@ export default function Movimentacao({
               }}
               className="w-100"
             >
-              <ToggleButton id="tipo-entrada" value="entrada" variant="outline-success">
+              <ToggleButton id="tipo-entrada" value="entrada" variant="outline-success" disabled={salvando}>
                 ↑ Entrada
               </ToggleButton>
-              <ToggleButton id="tipo-saida" value="saida" variant="outline-danger">
+              <ToggleButton id="tipo-saida" value="saida" variant="outline-danger" disabled={salvando}>
                 ↓ Saída
               </ToggleButton>
             </ToggleButtonGroup>
@@ -139,8 +148,8 @@ export default function Movimentacao({
                 label="Quantidade"
                 obrigatorio
                 type="number"
-                min="0.01"
-                step="any"
+                min="1"
+                step="1"
                 value={formulario.quantidade}
                 onChange={atualizarCampo}
               />
@@ -211,7 +220,7 @@ export default function Movimentacao({
             {historico.length === 0 && (
               <tr>
                 <td colSpan="6" className="text-center text-secondary py-3">
-                  Nenhuma movimentação registrada nesta sessão.
+                  Nenhuma movimentação registrada.
                 </td>
               </tr>
             )}
@@ -220,8 +229,12 @@ export default function Movimentacao({
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="outline-secondary" onClick={onClose}>Cancelar</Button>
-        <Button type="submit" form="form-movimentacao">Registrar Movimentação</Button>
+        <Button variant="outline-secondary" onClick={onClose} disabled={salvando}>
+          Cancelar
+        </Button>
+        <Button type="submit" form="form-movimentacao" disabled={salvando}>
+          {salvando ? 'Registrando...' : 'Registrar Movimentação'}
+        </Button>
       </Modal.Footer>
     </Modal>
   );

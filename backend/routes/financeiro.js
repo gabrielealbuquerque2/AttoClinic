@@ -32,7 +32,12 @@ router.get("/movimentacoes", async (req, res) => {
                     'Receita' AS tipo,
                     receita.tipo_pagamento,
                     receita.valor,
-                    receita.status
+                    receita.status,
+                    receita.id_paciente,
+                    receita.id_procedimento,
+                    NULL AS categoria,
+                    NULL AS fornecedor,
+                    NULL AS observacoes
                 FROM receita
 
                 LEFT JOIN paciente
@@ -47,7 +52,12 @@ router.get("/movimentacoes", async (req, res) => {
                     'Despesa' AS tipo,
                     despesa.tipo_pagamento,
                     despesa.valor,
-                    despesa.status
+                    despesa.status,
+                    NULL AS id_paciente,
+                    NULL AS id_procedimento,
+                    despesa.categoria,
+                    despesa.fornecedor,
+                    despesa.observacoes
                 FROM despesa
             ) AS movimentacoes
 
@@ -66,14 +76,14 @@ router.get("/movimentacoes", async (req, res) => {
         }
 
         if (mes) {
-            sql += 
-            `AND data >= ?
-            AND data < DATE_ADD(?, INTERVAL 1 MONTH)`;
+            sql += `
+                AND data >= ?
+                AND data < DATE_ADD(?, INTERVAL 1 MONTH)`;
 
             valores.push(`${mes}-01`, `${mes}-01`);
         }
 
-        sql += " ORDER BY data DESC";
+        sql += " ORDER BY data DESC, id DESC";
 
         const [rows] = await db.execute(sql, valores);
         res.json(rows);

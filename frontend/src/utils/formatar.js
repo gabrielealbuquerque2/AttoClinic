@@ -1,4 +1,19 @@
 // "2025-08-15" (ou "2025-08-15T..." ) -> "15/08/2025". Não usa Date para não sofrer com fuso horário.
+export function dataParaISO(data) {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
+export function hojeISO() {
+  return dataParaISO(new Date());
+}
+
+export function mesAtual() {
+  return hojeISO().slice(0, 7);
+}
+
 export function formatarData(valor) {
   if (!valor) return '—';
   const [ano, mes, dia] = String(valor).slice(0, 10).split('-');

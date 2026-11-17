@@ -119,6 +119,14 @@ function criarCrud(table, idColumn, fields, obrigatorios = []) { // fields = lis
             res.json({ message: "Registro excluído com sucesso" });
         } catch (error) {
             console.error(error);
+
+            // registro usado por outra tabela (ex: material com movimentações)
+            if (error.code === "ER_ROW_IS_REFERENCED_2" || error.code === "ER_ROW_IS_REFERENCED") {
+                return res.status(409).json({
+                    error: "Não é possível excluir: este registro já está sendo usado em outros cadastros"
+                });
+            }
+
             res.status(500).json({ error: "Erro ao excluir registro" });
         }
     });

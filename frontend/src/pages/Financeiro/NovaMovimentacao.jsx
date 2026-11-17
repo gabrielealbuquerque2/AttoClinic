@@ -1,17 +1,9 @@
 import { useState } from 'react';
-import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import { Alert, Button, Col, Form, Modal, Row } from 'react-bootstrap';
 import Campo from '../../components/Campo';
+import { mensagemDeErro } from '../../services/api';
 
-const pagamentos = ['Pix', 'Cartão', 'Dinheiro', 'Transferência'];
-const procedimentos = [
-  'Avaliação',
-  'Clareamento',
-  'Consulta de rotina',
-  'Extração',
-  'Limpeza',
-  'Restauração',
-  'Retorno',
-];
+const pagamentos = ['Pix', 'Cartão', 'Dinheiro', 'Transferência', 'Boleto'];
 const categoriasDespesa = [
   'Aluguel',
   'Equipamentos',
@@ -31,14 +23,14 @@ function dataHoje() {
 function criarFormulario(tipo, lancamento) {
   if (lancamento) {
     return {
-      paciente: lancamento.paciente || '',
-      procedimento: lancamento.procedimento || '',
+      paciente: String(lancamento.id_paciente ?? ''),
+      procedimento: String(lancamento.id_procedimento ?? ''),
       descricao: lancamento.descricao || '',
       categoria: lancamento.categoria || '',
       fornecedor: lancamento.fornecedor || '',
       valor: String(lancamento.valor ?? ''),
-      data: lancamento.data || dataHoje(),
-      pagamento: lancamento.pagamento || '',
+      data: lancamento.data_receita || lancamento.data_despesa || lancamento.data || dataHoje(),
+      pagamento: lancamento.tipo_pagamento || lancamento.pagamento || '',
       status: lancamento.status || 'Pendente',
       observacoes: lancamento.observacoes || '',
     };
@@ -62,12 +54,15 @@ function criarFormulario(tipo, lancamento) {
 export default function NovaMovimentacao({
   tipo,
   lancamento = null,
-  pacientes,
+  pacientes = [],
+  procedimentos = [],
   onClose,
   onSave,
 }) {
   const [formulario, setFormulario] = useState(() => criarFormulario(tipo, lancamento));
   const [erros, setErros] = useState({});
+  const [erroEnvio, setErroEnvio] = useState('');
+  const [salvando, setSalvando] = useState(false);
   const ehReceita = tipo === 'receita';
   const emEdicao = Boolean(lancamento);
 
@@ -75,9 +70,10 @@ export default function NovaMovimentacao({
     const { name, value } = evento.target;
     setFormulario((atual) => ({ ...atual, [name]: value }));
     setErros((atuais) => ({ ...atuais, [name]: '' }));
+    setErroEnvio('');
   }
 
-  function registrar(evento) {
+  async function registrar(evento) {
     evento.preventDefault();
     const camposObrigatorios = ehReceita
       ? ['paciente', 'valor', 'data']
@@ -85,10 +81,17 @@ export default function NovaMovimentacao({
     const novosErros = {};
 
     camposObrigatorios.forEach((campo) => {
-      if (!String(formulario[campo]).trim()) {
+      if (!String(formulario[campo] ?? '').trim()) {
         novosErros[campo] = 'Este campo é obrigatório.';
       }
     });
+
+    const pacienteSelecionado = pacientes.find(
+      (paciente) => String(paciente.id_paciente) === formulario.paciente
+    );
+    if (ehReceita && !pacienteSelecionado) {
+      novosErros.paciente = 'Selecione um paciente cadastrado.';
+    }
 
     const valor = Number(formulario.valor);
     if (formulario.valor !== '' && (!Number.isFinite(valor) || valor <= 0)) {
@@ -100,23 +103,43 @@ export default function NovaMovimentacao({
       return;
     }
 
-    const paciente = pacientes.find((nome) => nome === formulario.paciente);
-    const descricao = ehReceita
-      ? formulario.descricao.trim() ||
-        formulario.procedimento ||
-        'Receita odontológica'
-      : formulario.descricao.trim();
+    const dados = ehReceita
+      ? {
+          id_paciente: pacienteSelecionado.id_paciente,
+          id_procedimento: formulario.procedimento
+            ? Number(formulario.procedimento)
+            : null,
+          data_receita: formulario.data,
+          valor,
+          descricao: formulario.descricao.trim() ||
+            procedimentos.find(
+              (procedimento) =>
+                String(procedimento.id_procedimento) === formulario.procedimento
+            )?.nome_procedimento ||
+            'Receita odontológica',
+          tipo_pagamento: formulario.pagamento || null,
+          status: formulario.status,
+        }
+      : {
+          data_despesa: formulario.data,
+          categoria: formulario.categoria,
+          fornecedor: formulario.fornecedor.trim() || null,
+          descricao: formulario.descricao.trim(),
+          valor,
+          tipo_pagamento: formulario.pagamento || null,
+          status: formulario.status,
+          observacoes: formulario.observacoes,
+        };
 
-    onSave({
-      ...formulario,
-      id: lancamento?.id,
-      tipo,
-      descricao,
-      pessoa: ehReceita ? formulario.paciente : formulario.fornecedor.trim() || '—',
-      paciente: paciente || formulario.paciente,
-      fornecedor: formulario.fornecedor.trim(),
-      valor,
-    });
+    setSalvando(true);
+    setErroEnvio('');
+    try {
+      await onSave(dados);
+    } catch (erro) {
+      setErroEnvio(mensagemDeErro(erro));
+    } finally {
+      setSalvando(false);
+    }
   }
 
   const titulo = ehReceita ? 'Nova Receita' : 'Nova Despesa';
@@ -145,6 +168,9 @@ export default function NovaMovimentacao({
         </Modal.Header>
 
         <Modal.Body>
+          {erroEnvio && (
+            <Alert variant="danger" className="py-2">{erroEnvio}</Alert>
+          )}
           {ehReceita ? (
             <>
               <Campo
@@ -159,7 +185,9 @@ export default function NovaMovimentacao({
               >
                 <option value="">Selecionar paciente...</option>
                 {pacientes.map((paciente) => (
-                  <option key={paciente}>{paciente}</option>
+                  <option key={paciente.id_paciente} value={paciente.id_paciente}>
+                    {paciente.nome}
+                  </option>
                 ))}
               </Campo>
 
@@ -173,7 +201,12 @@ export default function NovaMovimentacao({
               >
                 <option value="">Selecionar procedimento...</option>
                 {procedimentos.map((procedimento) => (
-                  <option key={procedimento}>{procedimento}</option>
+                  <option
+                    key={procedimento.id_procedimento}
+                    value={procedimento.id_procedimento}
+                  >
+                    {procedimento.nome_procedimento}
+                  </option>
                 ))}
               </Campo>
 
@@ -220,6 +253,7 @@ export default function NovaMovimentacao({
                 name="fornecedor"
                 label="Fornecedor"
                 placeholder="Nome do fornecedor..."
+                maxLength={255}
                 value={formulario.fornecedor}
                 onChange={atualizarCampo}
               />
@@ -301,13 +335,15 @@ export default function NovaMovimentacao({
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" variant={cor}>
+          <Button variant="outline-secondary" onClick={onClose} disabled={salvando}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant={cor} disabled={salvando}>
             {emEdicao
-              ? 'Salvar alterações'
+              ? salvando ? 'Salvando...' : 'Salvar alterações'
               : ehReceita
-                ? 'Registrar Receita'
-                : 'Registrar Despesa'}
+                ? salvando ? 'Salvando...' : 'Registrar Receita'
+                : salvando ? 'Salvando...' : 'Registrar Despesa'}
           </Button>
         </Modal.Footer>
       </Form>

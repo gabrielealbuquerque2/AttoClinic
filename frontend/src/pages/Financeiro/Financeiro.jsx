@@ -1,122 +1,23 @@
-import { useState } from 'react';
-import { Alert, Button, Card, Col, Form, Row, Table } from 'react-bootstrap';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Button, Card, Col, Row, Table } from 'react-bootstrap';
 import NovaMovimentacao from './NovaMovimentacao';
 import AppLayout from '../../components/AppLayout';
+import Campo from '../../components/Campo';
 import PageHeader from '../../components/PageHeader';
 import IndicatorCard from '../../components/IndicatorCard';
 import StatusBadge from '../../components/StatusBadge';
+import api, { mensagemDeErro } from '../../services/api';
+import { formatarData, formatarMoeda, mesAtual } from '../../utils/formatar';
 
-const pacientes = [
-  'Maria Clara Oliveira Santos',
-  'Pedro Henrique Souza',
-  'Ana Paula Costa Lima',
-  'João Carlos Ferreira',
-  'Fernanda Rocha Alves',
-];
-
-const lancamentosIniciais = [
-  {
-    id: 1,
-    data: '2025-08-02',
-    descricao: 'Limpeza',
-    pessoa: 'Ana Paula Costa Lima',
-    paciente: 'Ana Paula Costa Lima',
-    procedimento: 'Limpeza',
-    tipo: 'receita',
-    pagamento: 'Pix',
-    valor: 250,
-    status: 'Pago',
-  },
-  {
-    id: 2,
-    data: '2025-08-05',
-    descricao: 'Avaliação odontológica',
-    pessoa: 'Pedro Henrique Souza',
-    paciente: 'Pedro Henrique Souza',
-    procedimento: 'Avaliação',
-    tipo: 'receita',
-    pagamento: 'Cartão',
-    valor: 180,
-    status: 'Pago',
-  },
-  {
-    id: 3,
-    data: '2025-08-08',
-    descricao: 'Restauração',
-    pessoa: 'Maria Clara Oliveira Santos',
-    paciente: 'Maria Clara Oliveira Santos',
-    procedimento: 'Restauração',
-    tipo: 'receita',
-    pagamento: 'Pix',
-    valor: 420,
-    status: 'Pendente',
-  },
-  {
-    id: 4,
-    data: '2025-08-11',
-    descricao: 'Compra de materiais odontológicos',
-    pessoa: 'Dental Supply',
-    fornecedor: 'Dental Supply',
-    categoria: 'Materiais',
-    tipo: 'despesa',
-    pagamento: 'Transferência',
-    valor: 325,
-    status: 'Pago',
-  },
-  {
-    id: 5,
-    data: '2025-08-14',
-    descricao: 'Consulta de rotina',
-    pessoa: 'João Carlos Ferreira',
-    paciente: 'João Carlos Ferreira',
-    procedimento: 'Consulta de rotina',
-    tipo: 'receita',
-    pagamento: 'Dinheiro',
-    valor: 150,
-    status: 'Pago',
-  },
-  {
-    id: 6,
-    data: '2025-08-19',
-    descricao: 'Manutenção de equipamentos',
-    pessoa: 'Oficina Odonto',
-    fornecedor: 'Oficina Odonto',
-    categoria: 'Manutenção',
-    tipo: 'despesa',
-    pagamento: 'Pix',
-    valor: 210,
-    status: 'Pendente',
-  },
-  {
-    id: 7,
-    data: '2025-07-04',
-    descricao: 'Limpeza',
-    pessoa: 'Fernanda Rocha Alves',
-    paciente: 'Fernanda Rocha Alves',
-    procedimento: 'Limpeza',
-    tipo: 'receita',
-    pagamento: 'Cartão',
-    valor: 220,
-    status: 'Pago',
-  },
-  {
-    id: 8,
-    data: '2025-07-16',
-    descricao: 'Materiais clínicos',
-    pessoa: 'MedDental',
-    fornecedor: 'MedDental',
-    categoria: 'Materiais',
-    tipo: 'despesa',
-    pagamento: 'Transferência',
-    valor: 280,
-    status: 'Pago',
-  },
-];
-
-const moeda = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-});
+const resumoVazio = {
+  receitas_mes: 0,
+  despesas_mes: 0,
+  saldo: 0,
+  pagamentos_pendentes: 0,
+  quantidade_pendentes: 0,
+  variacao_receitas: null,
+  variacao_despesas: null,
+};
 
 function formatarMes(mes) {
   const [ano, numeroMes] = mes.split('-').map(Number);
@@ -126,56 +27,84 @@ function formatarMes(mes) {
   return `${nomeMes.charAt(0).toUpperCase()}${nomeMes.slice(1)} ${ano}`;
 }
 
-function mesAnterior(mes) {
-  const [ano, numeroMes] = mes.split('-').map(Number);
-  const data = new Date(ano, numeroMes - 2, 1);
-  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function totalPorTipo(lancamentos, tipo) {
-  return lancamentos
-    .filter((lancamento) => lancamento.tipo === tipo)
-    .reduce((total, lancamento) => total + Number(lancamento.valor), 0);
-}
-
-function formatarVariacao(atual, anterior) {
-  if (!anterior) return atual ? 'Novo neste período' : 'Sem variação';
-  const percentual = ((atual - anterior) / anterior) * 100;
-  const prefixo = percentual > 0 ? '+' : '';
-  return `${prefixo}${percentual.toLocaleString('pt-BR', {
+// variacao vem do back em % (ou null quando o mês anterior foi zero)
+function formatarVariacao(variacao) {
+  if (variacao === null || variacao === undefined) return 'Sem dados do mês anterior';
+  const prefixo = variacao > 0 ? '+' : '';
+  return `${prefixo}${Number(variacao).toLocaleString('pt-BR', {
     maximumFractionDigits: 1,
   })}% em relação ao anterior`;
 }
 
+// Receita e despesa têm ids independentes, então a rota depende do tipo
+function rotaDoTipo(tipo) {
+  return tipo === 'receita' ? '/receitas' : '/despesas';
+}
+
 export default function Financeiro() {
-  const [lancamentos, setLancamentos] = useState(lancamentosIniciais);
-  const [mesSelecionado, setMesSelecionado] = useState('2025-08');
+  const [lancamentos, setLancamentos] = useState([]);
+  const [resumo, setResumo] = useState(resumoVazio);
+  const [pacientes, setPacientes] = useState([]);
+  const [procedimentos, setProcedimentos] = useState([]);
+  const [mesSelecionado, setMesSelecionado] = useState(mesAtual());
   const [filtroTipo, setFiltroTipo] = useState('Todos os tipos');
   const [filtroStatus, setFiltroStatus] = useState('Todos os status');
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
   const [modal, setModal] = useState(null);
   const [lancamentoEditando, setLancamentoEditando] = useState(null);
   const [mensagem, setMensagem] = useState('');
+  const ultimaRequisicao = useRef(0);
 
-  const dadosMes = lancamentos.filter((lancamento) =>
-    lancamento.data.startsWith(mesSelecionado)
-  );
-  const dadosMesAnterior = lancamentos.filter((lancamento) =>
-    lancamento.data.startsWith(mesAnterior(mesSelecionado))
-  );
-  const receitas = totalPorTipo(dadosMes, 'receita');
-  const despesas = totalPorTipo(dadosMes, 'despesa');
-  const receitasAnterior = totalPorTipo(dadosMesAnterior, 'receita');
-  const despesasAnterior = totalPorTipo(dadosMesAnterior, 'despesa');
-  const pendentes = dadosMes.filter((lancamento) => lancamento.status === 'Pendente');
+  const carregar = useCallback(async () => {
+    // se o mês mudar rápido, ignora respostas antigas
+    const numero = ++ultimaRequisicao.current;
+    try {
+      const [lista, resumoMes] = await Promise.all([
+        api.get('/financeiro/movimentacoes', { params: { mes: mesSelecionado } }),
+        api.get('/financeiro/resumo', { params: { mes: mesSelecionado } }),
+      ]);
+      if (numero !== ultimaRequisicao.current) return;
+      setLancamentos(lista.data);
+      setResumo(resumoMes.data);
+      setErro('');
+    } catch (e) {
+      if (numero !== ultimaRequisicao.current) return;
+      setErro(mensagemDeErro(e, 'Erro ao carregar o financeiro.'));
+    } finally {
+      if (numero === ultimaRequisicao.current) setCarregando(false);
+    }
+  }, [mesSelecionado]);
 
-  const lancamentosFiltrados = dadosMes
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  // Listas usadas no formulário de receita
+  useEffect(() => {
+    async function carregarCadastros() {
+      try {
+        const [listaPacientes, listaProcedimentos] = await Promise.all([
+          api.get('/pacientes/buscar'),
+          api.get('/procedimentos/buscar'),
+        ]);
+        setPacientes(listaPacientes.data);
+        setProcedimentos(listaProcedimentos.data);
+      } catch (e) {
+        setErro(mensagemDeErro(e, 'Erro ao carregar pacientes e procedimentos.'));
+      }
+    }
+    carregarCadastros();
+  }, []);
+
+  const lancamentosFiltrados = lancamentos
     .filter((lancamento) =>
-      filtroTipo === 'Todos os tipos' || lancamento.tipo === filtroTipo
+      filtroTipo === 'Todos os tipos' || lancamento.tipo.toLowerCase() === filtroTipo
     )
     .filter((lancamento) =>
-      filtroStatus === 'Todos os status' || lancamento.status === filtroStatus
-    )
-    .sort((a, b) => b.data.localeCompare(a.data));
+      filtroStatus === 'Todos os status' ||
+      String(lancamento.status).toLowerCase() === filtroStatus.toLowerCase()
+    );
 
   function abrirCadastro(tipo) {
     setMensagem('');
@@ -186,68 +115,79 @@ export default function Financeiro() {
   function abrirEdicao(lancamento) {
     setMensagem('');
     setLancamentoEditando(lancamento);
-    setModal(lancamento.tipo);
+    setModal(lancamento.tipo.toLowerCase());
   }
 
-  function salvarLancamento(dados) {
-    if (lancamentoEditando) {
-      setLancamentos((atuais) =>
-        atuais.map((item) =>
-          item.id === lancamentoEditando.id
-            ? { ...item, ...dados, id: lancamentoEditando.id }
-            : item
-        )
-      );
-      setMensagem('Lançamento atualizado nesta sessão.');
-    } else {
-      setLancamentos((atuais) => [...atuais, { ...dados, id: Date.now() }]);
-      setMensagem('Lançamento registrado nesta sessão.');
-    }
-
+  function fecharModal() {
     setModal(null);
     setLancamentoEditando(null);
   }
 
-  function excluirLancamento(lancamento) {
+  // O modal captura o erro lançado aqui e mostra a mensagem dentro dele.
+  async function salvarLancamento(dados) {
+    const rota = rotaDoTipo(modal);
+
+    if (lancamentoEditando) {
+      await api.put(`${rota}/put/${lancamentoEditando.id}`, dados);
+      setMensagem('Lançamento atualizado com sucesso.');
+    } else {
+      await api.post(`${rota}/post`, dados);
+      setMensagem('Lançamento registrado com sucesso.');
+    }
+
+    // se a data caiu em outro mês, mostra esse mês para o lançamento não "sumir"
+    const dataLancamento = dados.data_receita ?? dados.data_despesa;
+    const mesDoLancamento = dataLancamento.slice(0, 7);
+    fecharModal();
+    if (mesDoLancamento !== mesSelecionado) {
+      setMesSelecionado(mesDoLancamento);
+    } else {
+      await carregar();
+    }
+  }
+
+  async function excluirLancamento(lancamento) {
     const confirmado = window.confirm(
       `Deseja excluir o lançamento "${lancamento.descricao}"?`
     );
     if (!confirmado) return;
 
-    setLancamentos((atuais) =>
-      atuais.filter((item) => item.id !== lancamento.id)
-    );
-    setMensagem('Lançamento excluído nesta sessão.');
+    try {
+      await api.delete(`${rotaDoTipo(lancamento.tipo.toLowerCase())}/delete/${lancamento.id}`);
+      setMensagem('Lançamento excluído com sucesso.');
+      setErro('');
+      await carregar();
+    } catch (e) {
+      setErro(mensagemDeErro(e, 'Erro ao excluir lançamento.'));
+    }
   }
 
   const indicadores = [
     {
       titulo: 'Receitas do Mês',
-      valor: moeda.format(receitas),
-      variacao: formatarVariacao(receitas, receitasAnterior),
+      valor: formatarMoeda(resumo.receitas_mes),
+      variacao: formatarVariacao(resumo.variacao_receitas),
       icone: '↗',
       tom: 'success',
     },
     {
       titulo: 'Despesas do Mês',
-      valor: moeda.format(despesas),
-      variacao: formatarVariacao(despesas, despesasAnterior),
+      valor: formatarMoeda(resumo.despesas_mes),
+      variacao: formatarVariacao(resumo.variacao_despesas),
       icone: '↘',
       tom: 'danger',
     },
     {
       titulo: 'Saldo',
-      valor: moeda.format(receitas - despesas),
+      valor: formatarMoeda(resumo.saldo),
       variacao: 'Receitas menos despesas pagas',
       icone: '=',
       tom: 'primary',
     },
     {
       titulo: 'Pagamentos Pendentes',
-      valor: moeda.format(
-        pendentes.reduce((total, item) => total + Number(item.valor), 0)
-      ),
-      variacao: `${pendentes.length} lançamento${pendentes.length === 1 ? '' : 's'} pendente${pendentes.length === 1 ? '' : 's'}`,
+      valor: formatarMoeda(resumo.pagamentos_pendentes),
+      variacao: `${resumo.quantidade_pendentes} lançamento${resumo.quantidade_pendentes === 1 ? '' : 's'} pendente${resumo.quantidade_pendentes === 1 ? '' : 's'}`,
       icone: '◷',
       tom: 'warning',
     },
@@ -260,13 +200,18 @@ export default function Financeiro() {
         subtitulo={
           <div className="d-flex flex-wrap align-items-center gap-2">
             <span>{formatarMes(mesSelecionado)}</span>
-            <Form.Control
-              aria-label="Selecionar mês do financeiro"
+            <Campo
+              id="financeiro-mes"
+              label="Selecionar mês do financeiro"
+              labelClassName="visually-hidden"
               type="month"
               size="sm"
-              className="w-auto"
+              className="w-auto mb-0"
               value={mesSelecionado}
-              onChange={(evento) => setMesSelecionado(evento.target.value)}
+              onChange={(evento) => {
+                // o campo fica vazio se o usuário apagar o mês
+                if (evento.target.value) setMesSelecionado(evento.target.value);
+              }}
             />
           </div>
         }
@@ -278,6 +223,8 @@ export default function Financeiro() {
           + Nova Despesa
         </Button>
       </PageHeader>
+
+      {erro && <Alert variant="danger">{erro}</Alert>}
 
       {mensagem && (
         <Alert
@@ -312,30 +259,34 @@ export default function Financeiro() {
             <small className="text-secondary">{lancamentosFiltrados.length} lançamentos no período</small>
           </div>
           <div className="d-flex flex-wrap gap-3">
-            <Form.Group controlId="filtro-tipo" className="d-flex align-items-center gap-2">
-              <Form.Label className="small text-secondary mb-0">Tipo</Form.Label>
-              <Form.Select
-                size="sm"
-                value={filtroTipo}
-                onChange={(evento) => setFiltroTipo(evento.target.value)}
-              >
-                <option>Todos os tipos</option>
-                <option value="receita">Receita</option>
-                <option value="despesa">Despesa</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group controlId="filtro-status" className="d-flex align-items-center gap-2">
-              <Form.Label className="small text-secondary mb-0">Status</Form.Label>
-              <Form.Select
-                size="sm"
-                value={filtroStatus}
-                onChange={(evento) => setFiltroStatus(evento.target.value)}
-              >
-                <option>Todos os status</option>
-                <option>Pago</option>
-                <option>Pendente</option>
-              </Form.Select>
-            </Form.Group>
+            <Campo
+              id="filtro-tipo"
+              label="Tipo"
+              labelClassName="small text-secondary mb-0"
+              className="d-flex align-items-center gap-2 mb-0"
+              tipo="select"
+              size="sm"
+              value={filtroTipo}
+              onChange={(evento) => setFiltroTipo(evento.target.value)}
+            >
+              <option>Todos os tipos</option>
+              <option value="receita">Receita</option>
+              <option value="despesa">Despesa</option>
+            </Campo>
+            <Campo
+              id="filtro-status"
+              label="Status"
+              labelClassName="small text-secondary mb-0"
+              className="d-flex align-items-center gap-2 mb-0"
+              tipo="select"
+              size="sm"
+              value={filtroStatus}
+              onChange={(evento) => setFiltroStatus(evento.target.value)}
+            >
+              <option>Todos os status</option>
+              <option>Pago</option>
+              <option>Pendente</option>
+            </Campo>
           </div>
         </Card.Header>
 
@@ -344,7 +295,7 @@ export default function Financeiro() {
             <tr>
               <th>Data</th>
               <th>Descrição</th>
-              <th>Paciente / Fornecedor</th>
+              <th>Paciente / Categoria</th>
               <th>Tipo</th>
               <th>Pagamento</th>
               <th>Valor</th>
@@ -353,54 +304,54 @@ export default function Financeiro() {
             </tr>
           </thead>
           <tbody>
-            {lancamentosFiltrados.map((lancamento) => (
-              <tr key={lancamento.id}>
-                <td className="text-nowrap">{new Date(`${lancamento.data}T00:00:00`).toLocaleDateString('pt-BR')}</td>
-                <td className="col-descricao">
-                  <strong>{lancamento.descricao}</strong>
-                  {lancamento.categoria && (
-                    <div className="small text-secondary">{lancamento.categoria}</div>
-                  )}
-                </td>
-                <td>{lancamento.pessoa || '—'}</td>
-                <td>
-                  <StatusBadge status={lancamento.tipo === 'receita' ? 'Receita' : 'Despesa'} />
-                </td>
-                <td className="text-nowrap">{lancamento.pagamento || '—'}</td>
-                <td
-                  className={`fw-bold text-nowrap ${
-                    lancamento.tipo === 'receita' ? 'text-success' : 'text-danger'
-                  }`}
-                >
-                  {lancamento.tipo === 'receita' ? '+ ' : '- '}
-                  {moeda.format(Number(lancamento.valor))}
-                </td>
-                <td><StatusBadge status={lancamento.status} /></td>
-                <td>
-                  <div className="d-flex gap-2">
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      title="Editar lançamento"
-                      aria-label={`Editar ${lancamento.descricao}`}
-                      onClick={() => abrirEdicao(lancamento)}
-                    >
-                      ✎
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      title="Excluir lançamento"
-                      aria-label={`Excluir ${lancamento.descricao}`}
-                      onClick={() => excluirLancamento(lancamento)}
-                    >
-                      ×
-                    </Button>
-                  </div>
-                </td>
+            {carregando && (
+              <tr>
+                <td colSpan="8" className="text-center text-secondary py-4">Carregando...</td>
               </tr>
-            ))}
-            {lancamentosFiltrados.length === 0 && (
+            )}
+            {lancamentosFiltrados.map((lancamento) => {
+              const ehReceita = lancamento.tipo.toLowerCase() === 'receita';
+
+              return (
+                <tr key={`${lancamento.tipo}-${lancamento.id}`}>
+                  <td className="text-nowrap">{formatarData(lancamento.data)}</td>
+                  <td className="col-descricao">
+                    <strong>{lancamento.descricao}</strong>
+                  </td>
+                  <td>{lancamento.paciente_fornecedor || '—'}</td>
+                  <td><StatusBadge status={ehReceita ? 'Receita' : 'Despesa'} /></td>
+                  <td className="text-nowrap">{lancamento.tipo_pagamento || '—'}</td>
+                  <td className={`fw-bold text-nowrap ${ehReceita ? 'text-success' : 'text-danger'}`}>
+                    {ehReceita ? '+ ' : '- '}
+                    {formatarMoeda(lancamento.valor)}
+                  </td>
+                  <td><StatusBadge status={lancamento.status} /></td>
+                  <td>
+                    <div className="d-flex gap-2">
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        title="Editar lançamento"
+                        aria-label={`Editar ${lancamento.descricao}`}
+                        onClick={() => abrirEdicao(lancamento)}
+                      >
+                        ✎
+                      </Button>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        title="Excluir lançamento"
+                        aria-label={`Excluir ${lancamento.descricao}`}
+                        onClick={() => excluirLancamento(lancamento)}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+            {!carregando && lancamentosFiltrados.length === 0 && (
               <tr>
                 <td colSpan="8" className="text-center text-secondary py-4">
                   Nenhuma movimentação encontrada para os filtros selecionados.
@@ -416,10 +367,8 @@ export default function Financeiro() {
           tipo={modal}
           lancamento={lancamentoEditando}
           pacientes={pacientes}
-          onClose={() => {
-            setModal(null);
-            setLancamentoEditando(null);
-          }}
+          procedimentos={procedimentos}
+          onClose={fecharModal}
           onSave={salvarLancamento}
         />
       )}
