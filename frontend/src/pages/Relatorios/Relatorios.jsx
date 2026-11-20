@@ -118,58 +118,56 @@ export default function Relatorios() {
       {erro && <Alert variant="danger">{erro}</Alert>}
 
       {resultado && (
-        <div className="area-impressao">
-          <Card>
-            <Card.Body>
-              <Card.Title as="h3" className="fs-5 fw-bold">{resultado.titulo}</Card.Title>
-              <div className="small text-secondary mb-3">
-                {dataInicial || dataFinal
-                  ? `Período: ${dataInicial ? formatarData(dataInicial) : 'início'} a ${dataFinal ? formatarData(dataFinal) : 'hoje'}`
-                  : 'Período: todo o histórico'}
-              </div>
+        <Card>
+          <Card.Body>
+            <Card.Title as="h3" className="fs-5 fw-bold">{resultado.titulo}</Card.Title>
+            <div className="small text-secondary mb-3">
+              {dataInicial || dataFinal
+                ? `Período: ${dataInicial ? formatarData(dataInicial) : 'início'} a ${dataFinal ? formatarData(dataFinal) : 'hoje'}`
+                : 'Período: todo o histórico'}
+            </div>
 
-              <Row xs={2} md={3} xl={5} className="g-3 mb-4">
-                {resultado.dados.resumo.map((item) => (
-                  <Col key={item.rotulo}>
-                    <div className="border rounded p-3 h-100">
-                      <div className="small text-secondary">{item.rotulo}</div>
-                      <div className="fs-4 fw-bold">
-                        {item.formato === 'moeda' ? formatarMoeda(item.valor) : item.valor}
-                      </div>
+            <Row xs={2} md={3} xl={5} className="g-3 mb-4">
+              {resultado.dados.resumo.map((item) => (
+                <Col key={item.rotulo}>
+                  <div className="border rounded p-3 h-100">
+                    <div className="small text-secondary">{item.rotulo}</div>
+                    <div className="fs-4 fw-bold">
+                      {item.formato === 'moeda' ? formatarMoeda(item.valor) : item.valor}
                     </div>
-                  </Col>
-                ))}
-              </Row>
+                  </div>
+                </Col>
+              ))}
+            </Row>
 
-              <Table responsive hover size="sm" className="align-middle mb-0">
-                <thead>
+            <Table responsive hover size="sm" className="align-middle mb-0">
+              <thead>
+                <tr>
+                  {resultado.dados.colunas.map((coluna) => (
+                    <th key={coluna.campo}>{coluna.rotulo}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {resultado.dados.linhas.length === 0 && (
                   <tr>
+                    <td colSpan={resultado.dados.colunas.length} className="text-center text-secondary py-4">
+                      Nenhum registro no período.
+                    </td>
+                  </tr>
+                )}
+                {resultado.dados.linhas.map((linha, i) => (
+                  // eslint-disable-next-line react/no-array-index-key
+                  <tr key={i}>
                     {resultado.dados.colunas.map((coluna) => (
-                      <th key={coluna.campo}>{coluna.rotulo}</th>
+                      <td key={coluna.campo}>{renderizarCelula(coluna, linha[coluna.campo])}</td>
                     ))}
                   </tr>
-                </thead>
-                <tbody>
-                  {resultado.dados.linhas.length === 0 && (
-                    <tr>
-                      <td colSpan={resultado.dados.colunas.length} className="text-center text-secondary py-4">
-                        Nenhum registro no período.
-                      </td>
-                    </tr>
-                  )}
-                  {resultado.dados.linhas.map((linha, i) => (
-                    // eslint-disable-next-line react/no-array-index-key
-                    <tr key={i}>
-                      {resultado.dados.colunas.map((coluna) => (
-                        <td key={coluna.campo}>{renderizarCelula(coluna, linha[coluna.campo])}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Card.Body>
-          </Card>
-        </div>
+                ))}
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
       )}
     </AppLayout>
   );
