@@ -369,3 +369,63 @@
     text-align: center;
   }
 }
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body,
+  #root,
+  .app-shell,
+  .app-main {
+    width: 100%;
+    min-height: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    background: #fff;
+  }
+
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar,
+  .app-main > :not(.area-impressao) {
+    display: none !important;
+  }
+
+  .area-impressao {
+    width: 100%;
+  }
+
+  .area-impressao .card {
+    border: 0;
+    box-shadow: none;
+  }
+
+  .area-impressao .card-body {
+    padding: 0;
+  }
+
+  .area-impressao table {
+    width: 100%;
+    font-size: 10pt;
+  }
+
+  .area-impressao thead {
+    display: table-header-group;
+  }
+
+  .area-impressao tr,
+  .area-impressao .border {
+    break-inside: avoid;
+  }
+
+  .area-impressao * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
