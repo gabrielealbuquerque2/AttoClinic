@@ -26,6 +26,10 @@ export default function Prontuario() {
   const [abaAtiva, setAbaAtiva] = useState('Resumo');
 
   const [erro, setErro] = useState('');
+  const [observacoes, setObservacoes] = useState('');
+  const [erroObservacoes, setErroObservacoes] = useState('');
+  const [sucessoObservacoes, setSucessoObservacoes] = useState('');
+  const [salvandoObservacoes, setSalvandoObservacoes] = useState(false);
 
   // Lista (com busca por nome, CPF ou e-mail)
   useEffect(() => {
@@ -62,6 +66,7 @@ export default function Prontuario() {
       .then(({ data }) => {
         if (!cancelado) {
           setDetalhe(data);
+          setObservacoes(data.prontuario?.observacoes ?? '');
           setErro('');
         }
       })
@@ -72,6 +77,40 @@ export default function Prontuario() {
       cancelado = true;
     };
   }, [idSelecionado]);
+
+  async function salvarObservacoes(evento) {
+    evento.preventDefault();
+    setSalvandoObservacoes(true);
+    setErroObservacoes('');
+    setSucessoObservacoes('');
+
+    try {
+      const texto = observacoes.trim();
+      if (detalhe.prontuario) {
+        await api.put(`/prontuarios/put/${detalhe.prontuario.id_prontuario}`, {
+          observacoes: texto || null,
+        });
+      } else {
+        const hoje = new Date();
+        const data = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+        await api.post('/prontuarios/post', {
+          id_paciente: detalhe.paciente.id_paciente,
+          data,
+          historico: '',
+          observacoes: texto || null,
+        });
+      }
+
+      const { data } = await api.get(`/prontuarios/detalhe/${idSelecionado}`);
+      setDetalhe(data);
+      setObservacoes(data.prontuario?.observacoes ?? '');
+      setSucessoObservacoes('Anotações salvas com sucesso.');
+    } catch (e) {
+      setErroObservacoes(mensagemDeErro(e, 'Erro ao salvar as anotações.'));
+    } finally {
+      setSalvandoObservacoes(false);
+    }
+  }
 
   function voltar(evento) {
     evento?.preventDefault();
@@ -186,8 +225,30 @@ export default function Prontuario() {
       ),
       Anotações: (
         <Card>
-          <Card.Body style={{ whiteSpace: 'pre-wrap' }}>
-            {prontuario?.observacoes || <span className="text-secondary">Nenhuma anotação registrada.</span>}
+          <Card.Body>
+            <Form onSubmit={salvarObservacoes}>
+              <Form.Group controlId="prontuario-observacoes">
+                <Form.Label className="fw-semibold">Observações do paciente</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={6}
+                  value={observacoes}
+                  onChange={(e) => {
+                    setObservacoes(e.target.value);
+                    setErroObservacoes('');
+                    setSucessoObservacoes('');
+                  }}
+                  placeholder="Registre observações importantes sobre o paciente..."
+                />
+              </Form.Group>
+              {erroObservacoes && <Alert variant="danger" className="mt-3 mb-0">{erroObservacoes}</Alert>}
+              {sucessoObservacoes && <Alert variant="success" className="mt-3 mb-0">{sucessoObservacoes}</Alert>}
+              <div className="d-flex justify-content-end mt-3">
+                <Button type="submit" disabled={salvandoObservacoes}>
+                  {salvandoObservacoes ? 'Salvando...' : 'Salvar anotações'}
+                </Button>
+              </div>
+            </Form>
           </Card.Body>
         </Card>
       ),
