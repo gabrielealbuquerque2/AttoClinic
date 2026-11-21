@@ -142,7 +142,6 @@ export default function Dashboard() {
           </div>
 
           <div className="d-flex align-items-center gap-2">
-            <span aria-hidden="true">🔔</span>
             <div className="avatar" style={{ backgroundColor: '#0284c7' }}>CM</div>
             <div className="lh-sm d-none d-sm-block">
               <strong className="d-block small">Dr. Lucas de Oliveira</strong>

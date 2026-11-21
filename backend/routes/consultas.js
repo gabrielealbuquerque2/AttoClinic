@@ -95,7 +95,7 @@ router.post("/agendar", async (req, res) => {
     }
 });
 
-// editar consulta (dados da consulta + procedimento)
+// editar consulta
 router.put("/atualizar/:id", async (req, res) => {
     let conexao;
 

@@ -1,7 +1,13 @@
 import express from "express";
 import db from "../database.js";
 
-function criarCrud(table, idColumn, fields, obrigatorios = []) { // fields = lista das colunas
+function criarCrud(
+    table,
+    idColumn,
+    fields,
+    obrigatorios = [],
+    middlewaresCadastro = []
+) { // fields = lista das colunas
     const router = express.Router();
 
     // Seleciona apenas os campos permitidos
@@ -44,7 +50,7 @@ function criarCrud(table, idColumn, fields, obrigatorios = []) { // fields = lis
     });
 
     // Cadastrar
-    router.post("/post", async (req, res) => {
+    router.post("/post", ...middlewaresCadastro, async (req, res) => {
         try {
             const dados = pegarDados(req.body);
 

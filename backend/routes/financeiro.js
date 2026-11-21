@@ -101,7 +101,7 @@ router.get("/movimentacoes", async (req, res) => {
 router.get("/resumo", async (req, res) => {
     try {
         const mes = req.query.mes ||
-            new Date().toISOString().slice(0, 7);  // pega o mesm atual
+            new Date().toISOString().slice(0, 7);  // pega o mes atual
 
         const [ano, numeroMes] = mes.split("-").map(Number);
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from 'react';                        // guarda informacoes que podem mudar durante o uso da tela 
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Alert } from 'react-bootstrap';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
@@ -13,8 +13,8 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault();   // impede de recarregar a pagina
+    setError('');         // apaga qualquer mensagem de erro anterior
     try {
       await signInWithEmailAndPassword(auth, email, senha);
       navigate('/dashboard');
@@ -25,7 +25,7 @@ export default function Login() {
 
   const handleEsqueciSenha = async () => {
     setError('');
-    if (!email.trim()) {
+    if (!email.trim()) {    // remove espaços
       setError('Digite seu e-mail antes de recuperar a senha.');
       return;
     }
@@ -45,8 +45,8 @@ export default function Login() {
         <p className="text-secondary mb-0">Acesse o sistema AttoClinic</p>
       </header>
 
-      <Form onSubmit={handleLogin} className="d-grid gap-3">
-        <Campo
+      <Form onSubmit={handleLogin} className="d-grid gap-3">   
+        <Campo // quando o form for enviado, executa a funcao handlelogin
           id="email"
           label="E-mail"
           type="email"
@@ -80,7 +80,8 @@ export default function Login() {
           </Alert>
         )}
 
-        <Button type="submit" className="py-2 fw-semibold">
+        {/* nao recebe navigate pq ta ligado ao form, que executa o handlelogin */}
+        <Button type="submit" className="py-2 fw-semibold"> 
           Entrar
         </Button>
 
