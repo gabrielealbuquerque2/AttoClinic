@@ -118,7 +118,7 @@ export default function Relatorios() {
       {erro && <Alert variant="danger">{erro}</Alert>}
 
       {resultado && (
-        <Card>
+        <Card className="relatorio-impressao">
           <Card.Body>
             <Card.Title as="h3" className="fs-5 fw-bold">{resultado.titulo}</Card.Title>
             <div className="small text-secondary mb-3">

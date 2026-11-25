@@ -212,12 +212,17 @@ export default function Prontuario() {
     const conteudo = {
       Resumo: resumo,
       Histórico: (
-       <Card>
-        <Card.Header className="bg-white fw-bold">
-          Histórico de atendimentos
-        </Card.Header>
-        <ListaAtendimentos itens={atendimentos} />
-      </Card>
+        <Card>
+          {prontuario?.historico && (
+            <Card.Body className="border-bottom" style={{ whiteSpace: 'pre-wrap' }}>
+              {prontuario.historico}
+            </Card.Body>
+          )}
+          <Card.Body>
+            <Card.Title as="h3" className="fs-6 fw-bold">Atendimentos realizados</Card.Title>
+            <ListaHistorico itens={atendimentos} />
+          </Card.Body>
+        </Card>
       ),
       Procedimentos: (
         <Card>
@@ -401,6 +406,36 @@ function ListaAtendimentos({ itens }) {
           <div className="d-flex align-items-center gap-3">
             <span className="small text-secondary">{formatarData(item.data)}</span>
             <StatusBadge status="Concluído" />
+          </div>
+        </ListGroup.Item>
+      ))}
+    </ListGroup>
+  );
+}
+
+function ListaHistorico({ itens }) {
+  if (itens.length === 0) {
+    return <div className="small text-secondary">Nenhum atendimento realizado.</div>;
+  }
+
+  return (
+    <ListGroup variant="flush">
+      {itens.map((item) => (
+        <ListGroup.Item key={item.id_consulta} className="px-0">
+          <div className="d-flex flex-wrap justify-content-between gap-2">
+            <div>
+              <strong>{item.procedimentos ?? 'Consulta sem procedimento'}</strong>
+              <div className="small text-secondary">{item.profissional}</div>
+              {item.observacoes && (
+                <div className="small mt-2" style={{ whiteSpace: 'pre-wrap' }}>
+                  {item.observacoes}
+                </div>
+              )}
+            </div>
+            <div className="small text-secondary text-end">
+              <div>{formatarData(item.data)}</div>
+              <div>{formatarHora(item.horario)}</div>
+            </div>
           </div>
         </ListGroup.Item>
       ))}

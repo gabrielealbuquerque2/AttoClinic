@@ -86,6 +86,7 @@ router.get("/detalhe/:id", async (req, res) => {
                 consulta.data,
                 consulta.horario,
                 consulta.status_consulta,
+                consulta.observacoes,
                 profissional.nome AS profissional,
                 GROUP_CONCAT(
                     DISTINCT procedimento.nome_procedimento
@@ -105,9 +106,10 @@ router.get("/detalhe/:id", async (req, res) => {
                 consulta.data,
                 consulta.horario,
                 consulta.status_consulta,
+                consulta.observacoes,
                 profissional.nome
              ORDER BY consulta.data DESC, consulta.horario DESC
-             LIMIT 20`,
+             `,
             [id]
         );
 

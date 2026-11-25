@@ -157,6 +157,38 @@
 
 .auth-painel { border-radius: 30px 30px 0 0; }
 
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .relatorio-impressao,
+  .relatorio-impressao * {
+    visibility: visible !important;
+  }
+
+  .app-shell,
+  .app-main {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .relatorio-impressao {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-shadow: none !important;
+  }
+
+  .relatorio-impressao tr {
+    break-inside: avoid;
+  }
+}
+
 @media (min-width: 768px) {
   .auth-painel {
     border-radius: 30px 0 0 30px;
