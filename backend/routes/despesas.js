@@ -4,7 +4,6 @@ const router = criarCrud(
     "despesa",
     "id_despesa",
     [
-        "id_usuario",
         "data_despesa",
         "categoria",
         "fornecedor",

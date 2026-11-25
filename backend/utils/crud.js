@@ -38,11 +38,11 @@ function criarCrud(
     // Buscar todos
     router.get("/buscar", async (req, res) => {
         try {
-            const [rows] = await db.execute( // primeiro elemento do array são as linhas
+            const [registros] = await db.execute( // primeiro elemento do array são as linhas
                 `SELECT * FROM ${table}`
             );
 
-            res.json(rows);
+            res.json(registros);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: "Erro ao buscar registros" });
@@ -77,8 +77,8 @@ function criarCrud(
             // join transforma em string
 
             await db.execute(sql, valores);
-
             res.status(201).json({ message: "Cadastro realizado com sucesso" });
+            
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: "Erro ao cadastrar registro" });

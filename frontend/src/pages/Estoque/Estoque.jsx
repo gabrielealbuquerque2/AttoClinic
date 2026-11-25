@@ -9,11 +9,11 @@ import IndicatorCard from '../../components/IndicatorCard';
 import StatusBadge from '../../components/StatusBadge';
 import api, { mensagemDeErro } from '../../services/api';
 
-const DIAS_ALERTA_VALIDADE = 30;
+const dias_alerta_validade = 30;
 
-function adaptarMaterial(material) {
+function adaptarMaterial(material) { // renomeia os dados do banco
   return {
-    ...material,
+    ...material, // copia todos os dados originais vindos do banco
     id: material.id_material,
     quantidade: Number(material.qtd_disponivel),
     unidade: material.unidade_medida,
@@ -22,32 +22,36 @@ function adaptarMaterial(material) {
   };
 }
 
-function adaptarMovimentacao(item) {
+function adaptarMovimentacao(item) { // renomeia os dados do banco
   return {
-    ...item,
+    ...item,  // copia todos os dados originais vindos do banco
     id: item.id_movimentacao,
     material: item.nome_material,
     tipo: item.tipo_movimentacao.toLowerCase() === 'entrada' ? 'entrada' : 'saida',
-    data: item.data_movimentacao,
-    usuario: item.nome_usuario || '—',
+    data: item.data_movimentacao
   };
 }
 
 function diasAteValidade(validade) {
   if (!validade) return null;
-  const hoje = new Date();
+
+  const hoje = new Date();    
   hoje.setHours(0, 0, 0, 0);
-  return Math.ceil((new Date(`${validade}T00:00:00`) - hoje) / 86400000);
+
+  const dataValidade = new Date(`${validade}T00:00:00`);
+  const dias = (dataValidade - hoje) / 86400000;
+
+  return Math.ceil(dias);
 }
 
 function obterStatus(material) {
   const dias = diasAteValidade(material.validade);
+
   if (dias !== null && dias < 0) return 'Vencido';
-  if (Number(material.quantidade) === 0) return 'Esgotado';
-  if (Number(material.quantidade) < Number(material.quantidadeMinima)) {
-    return 'Estoque Baixo';
-  }
-  if (dias !== null && dias <= DIAS_ALERTA_VALIDADE) return 'Próximo da Validade';
+  if (material.quantidade === 0) return 'Esgotado';
+  if (material.quantidade < material.quantidadeMinima) return 'Estoque Baixo';
+  if (dias !== null && dias <= 30) return 'Próximo da Validade';
+
   return 'Normal';
 }
 
@@ -91,6 +95,7 @@ export default function Estoque() {
     ...material,
     status: obterStatus(material),
   }));
+  
   const materiaisFiltrados =
     filtroStatus === 'Todos os status'
       ? materiaisComStatus
@@ -115,9 +120,9 @@ export default function Estoque() {
       titulo: 'Próx. da Validade',
       valor: materiais.filter((material) => {
         const dias = diasAteValidade(material.validade);
-        return dias !== null && dias >= 0 && dias <= DIAS_ALERTA_VALIDADE;
+        return dias !== null && dias >= 0 && dias <= dias_alerta_validade;
       }).length,
-      auxiliar: `vencem em até ${DIAS_ALERTA_VALIDADE} dias`,
+      auxiliar: `vencem em até ${dias_alerta_validade} dias`,
       icone: '◷',
       tom: 'info',
     },

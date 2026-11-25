@@ -212,11 +212,12 @@ export default function Prontuario() {
     const conteudo = {
       Resumo: resumo,
       Histórico: (
-        <Card>
-          <Card.Body style={{ whiteSpace: 'pre-wrap' }}>
-            {prontuario?.historico || <span className="text-secondary">Nenhum histórico registrado.</span>}
-          </Card.Body>
-        </Card>
+       <Card>
+        <Card.Header className="bg-white fw-bold">
+          Histórico de atendimentos
+        </Card.Header>
+        <ListaAtendimentos itens={atendimentos} />
+      </Card>
       ),
       Procedimentos: (
         <Card>

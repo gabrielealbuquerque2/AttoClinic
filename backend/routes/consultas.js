@@ -7,7 +7,6 @@ const router = criarCrud(
     [
         "id_prontuario",
         "id_paciente",
-        "id_usuario",
         "id_profissional",
         "data",
         "horario",
@@ -77,7 +76,6 @@ router.post("/agendar", async (req, res) => {
         });
 
     } catch (error) {
-        
         if (conexao) {
             await conexao.rollback();
         }
@@ -95,7 +93,7 @@ router.post("/agendar", async (req, res) => {
     }
 });
 
-// editar consulta
+// Editar consulta
 router.put("/atualizar/:id", async (req, res) => {
     let conexao;
 
@@ -161,7 +159,7 @@ router.put("/atualizar/:id", async (req, res) => {
             ]
         );
 
-        // troca o procedimento da consulta
+        // Troca o procedimento da consulta
         await conexao.execute(
             `DELETE FROM consulta_procedimento WHERE id_consulta = ?`,
             [req.params.id]
@@ -196,7 +194,7 @@ router.put("/atualizar/:id", async (req, res) => {
     }
 });
 
-// busca
+// Busca consultas da agenda
 router.get("/agenda", async (req, res) => {
     try {
         const { data, dataInicio, dataFim, id_profissional, status } = req.query;

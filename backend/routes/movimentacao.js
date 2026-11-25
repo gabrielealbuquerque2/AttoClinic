@@ -10,7 +10,6 @@ router.post("/registrar", async (req, res) => {
     try {
         const {
             id_material,
-            id_usuario,
             tipo_movimentacao,
             quantidade,
             data_movimentacao,
@@ -102,17 +101,15 @@ router.post("/registrar", async (req, res) => {
             `INSERT INTO movimentacao_estoque
             (
                 id_material,
-                id_usuario,
                 tipo_movimentacao,
                 quantidade,
                 data_movimentacao,
                 motivo,
                 observacao
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            VALUES (?, ?, ?, ?, ?, ?)`,
             [
                 id_material,
-                id_usuario || null,
                 tipo_movimentacao,
                 quantidadeMovimentada,
                 data_movimentacao,
@@ -149,6 +146,7 @@ router.post("/registrar", async (req, res) => {
 });
 
 // Buscar histórico de movimentações
+
 router.get("/historico", async (req, res) => {
     try {
         const { id_material } = req.query;
@@ -157,35 +155,32 @@ router.get("/historico", async (req, res) => {
             SELECT
                 movimentacao_estoque.id_movimentacao,
                 movimentacao_estoque.id_material,
-                movimentacao_estoque.id_usuario,
                 material.nome AS nome_material,
                 movimentacao_estoque.tipo_movimentacao,
                 movimentacao_estoque.quantidade,
                 movimentacao_estoque.data_movimentacao,
                 movimentacao_estoque.motivo,
-                movimentacao_estoque.observacao,
-                usuario.nome AS nome_usuario
+                movimentacao_estoque.observacao
 
             FROM movimentacao_estoque
 
             INNER JOIN material
                 ON movimentacao_estoque.id_material = material.id_material
 
-            LEFT JOIN usuario
-                ON movimentacao_estoque.id_usuario = usuario.id_usuario
-
             WHERE 1 = 1
         `;
 
         const valores = [];
 
-        // Filtrar pelo material selecionado
         if (id_material) {
             sql += " AND movimentacao_estoque.id_material = ?";
             valores.push(id_material);
         }
 
-        sql += " ORDER BY movimentacao_estoque.data_movimentacao DESC, movimentacao_estoque.id_movimentacao DESC";
+        sql += `
+            ORDER BY movimentacao_estoque.data_movimentacao DESC,
+                     movimentacao_estoque.id_movimentacao DESC
+        `;
 
         const [rows] = await db.execute(sql, valores);
 

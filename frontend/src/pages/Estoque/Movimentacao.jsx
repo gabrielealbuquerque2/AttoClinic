@@ -201,7 +201,6 @@ export default function Movimentacao({
               <th>Tipo</th>
               <th>QTD</th>
               <th>Motivo</th>
-              <th>Usuário</th>
             </tr>
           </thead>
           <tbody>
@@ -214,12 +213,11 @@ export default function Movimentacao({
                 </td>
                 <td>{item.quantidade}</td>
                 <td>{item.motivo}</td>
-                <td>{item.usuario}</td>
               </tr>
             ))}
             {historico.length === 0 && (
               <tr>
-                <td colSpan="6" className="text-center text-secondary py-3">
+                <td colSpan="5" className="text-center text-secondary py-3">
                   Nenhuma movimentação registrada.
                 </td>
               </tr>

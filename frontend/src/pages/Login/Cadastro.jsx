@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Alert } from 'react-bootstrap';
-import {
-  createUserWithEmailAndPassword,
-  updateProfile
-} from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../../firebase';
-import AuthLayout from '../../components/AuthLayout';
-import Campo from '../../components/Campo';
 import api, { mensagemDeErro } from '../../services/api';
+import AuthLayout from '../../components/AuthLayout';
 
 export default function Cadastro() {
+  const navigate = useNavigate();
+
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [funcao, setFuncao] = useState('');
@@ -18,16 +16,16 @@ export default function Cadastro() {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [error, setError] = useState('');
   const [salvando, setSalvando] = useState(false);
-  const [usuarioFirebasePendente, setUsuarioFirebasePendente] = useState(null);
 
-  const navigate = useNavigate();
+  // Guarda a conta caso o Firebase cadastre, mas o mysql apresente algum erro
+  const [usuarioFirebasePendente, setUsuarioFirebasePendente] = useState(null);
 
   const handleCadastro = async (e) => {
     e.preventDefault();
     setError('');
 
     if (!nome.trim() || !email.trim() || !funcao) {
-      setError('Preencha nome, e-mail e função na clínica.');
+      setError('Preencha todos os campos.');
       return;
     }
 
@@ -37,48 +35,41 @@ export default function Cadastro() {
     }
 
     setSalvando(true);
+
     try {
       let usuario = usuarioFirebasePendente;
+
+      // cria a conta no Firebase, caso ainda não tenha sido criada
       if (!usuario) {
-        const resultado = await createUserWithEmailAndPassword(
-          auth,
-          email.trim(),
-          senha
-        );
-        usuario = resultado.user;
+        const conta = await createUserWithEmailAndPassword(auth, email, senha);
+
+        usuario = conta.user;
         setUsuarioFirebasePendente(usuario);
       }
 
+      // Atualiza o nome no Firebase
       await updateProfile(usuario, {
         displayName: nome.trim()
       });
 
-      const token = await usuario.getIdToken();
-      try {
-        await api.post('/usuarios/post', {
-          nome: nome.trim(),
-          email: email.trim(),
-          perfil: funcao,
-          firebase_uid: usuario.uid
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      } catch (erroApi) {
-        setError(mensagemDeErro(erroApi, 'Não foi possível salvar o cadastro no banco de dados.'));
-        return;
-      }
+      // Salva os dados do usuário no MySQL
+      await api.post('/usuarios/post', {
+        nome: nome.trim(),
+        email: email.trim(),
+        perfil: funcao,
+        firebase_uid: usuario.uid
+      });
 
       setUsuarioFirebasePendente(null);
-      navigate('/dashboard');
+
+      alert('Cadastro realizado com sucesso!');
+      navigate('/login');
+
     } catch (error) {
-      if (error.code === 'auth/email-already-in-use') {
-        setError('Este e-mail já está cadastrado.');
-      } else if (error.code === 'auth/weak-password') {
-        setError('A senha deve ter pelo menos 6 caracteres.');
-      } else if (error.code === 'auth/invalid-email') {
-        setError('Digite um e-mail válido.');
-      } else {
-        setError('Não foi possível criar a conta no Firebase. Tente novamente.');
+      if (error.response) {  // erro retornado do back, mostra msg do servidor
+        setError(mensagemDeErro(error, 'Erro ao salvar os dados no banco.'));
+      } else { // erro sem resposta http, mostra msg do proprio erro
+        setError(error.message || 'Não foi possível realizar o cadastro.');
       }
     } finally {
       setSalvando(false);
@@ -87,97 +78,81 @@ export default function Cadastro() {
 
   return (
     <AuthLayout>
-      <Button
-        variant="link"
-        className="p-0 mb-4 text-secondary text-decoration-none"
-        onClick={() => navigate('/login')}
-      >
-        ‹ Voltar ao login
-      </Button>
-
-      <header className="mb-4">
-        <h2 className="fs-3 fw-bold mb-1">Criar conta</h2>
-        <p className="text-secondary mb-0">Cadastre-se para acessar o Sistema AttoClinic</p>
-      </header>
-
-      <Form onSubmit={handleCadastro} className="d-grid gap-3">
-        <Campo
-          id="cadastro-nome"
-          label="Nome completo"
-          obrigatorio
-          placeholder="Dr. Lucas de Oliveira"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          className=""
-          required
-          disabled={salvando}
-        />
-
-        <Campo
-          id="cadastro-email"
-          label="E-mail"
-          obrigatorio
-          type="email"
-          placeholder="seu@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className=""
-          required
-          disabled={Boolean(usuarioFirebasePendente) || salvando}
-        />
-
-        <Campo
-          id="cadastro-funcao"
-          label="Função na clínica"
-          obrigatorio
-          tipo="select"
-          value={funcao}
-          onChange={(e) => setFuncao(e.target.value)}
-          className=""
-          required
-          disabled={salvando}
-        >
-          <option value="">Selecione sua função</option>
-          <option value="gestor">Gestor</option>
-          <option value="funcionario">Funcionario(a)</option>
-        </Campo>
-
-        <Campo
-          id="cadastro-senha"
-          label="Senha"
-          obrigatorio
-          type="password"
-          placeholder="Mínimo 6 caracteres"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}  // atualiza a senha a cada digitacao
-          minLength={6}
-          className=""
-          required
-          disabled={salvando || Boolean(usuarioFirebasePendente)}
-        />
-
-        <Campo
-          id="cadastro-confirmar"
-          label="Confirmar senha"
-          obrigatorio
-          type="password"
-          placeholder="Repita a senha"
-          value={confirmarSenha}
-          onChange={(e) => setConfirmarSenha(e.target.value)}
-          minLength={6}
-          className=""
-          required
-          disabled={salvando || Boolean(usuarioFirebasePendente)}
-        />
+      <Form onSubmit={handleCadastro}>
+        <h2>Cadastro</h2>
 
         {error && (
-          <Alert variant="danger" className="py-2 mb-0">
+          <Alert variant="danger">
             {error}
           </Alert>
         )}
 
-        <Button type="submit" className="py-2 fw-semibold" disabled={salvando}>
-          {salvando ? 'Criando conta...' : 'Criar conta'}
+        <Form.Group className="mb-3">
+          <Form.Label>Nome</Form.Label>
+          <Form.Control
+            type="text"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            placeholder="Digite seu nome"
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>E-mail</Form.Label>
+          <Form.Control
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Digite seu e-mail"
+            disabled={!!usuarioFirebasePendente}
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Função</Form.Label>
+          <Form.Select
+            value={funcao}
+            onChange={(e) => setFuncao(e.target.value)}
+            required
+          >
+            <option value="">Selecione sua função</option>
+            <option value="gestor">Gestor</option>
+            <option value="funcionario">Funcionário</option>
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Senha</Form.Label>
+          <Form.Control
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            placeholder="Digite sua senha"
+            disabled={!!usuarioFirebasePendente}
+            required
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Confirmar senha</Form.Label>
+          <Form.Control
+            type="password"
+            value={confirmarSenha}
+            onChange={(e) => setConfirmarSenha(e.target.value)}
+            placeholder="Confirme sua senha"
+            disabled={!!usuarioFirebasePendente}
+            required
+          />
+        </Form.Group>
+
+        <Button
+          type="submit"
+          disabled={salvando}
+          className="w-100"
+        >
+          {salvando ? 'Cadastrando...' : 'Cadastrar'}
         </Button>
       </Form>
     </AuthLayout>

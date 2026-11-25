@@ -10,7 +10,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
 
   const handleLogin = async (e) => {
     e.preventDefault();   // impede de recarregar a pagina
